@@ -1,0 +1,53 @@
+/* proto.dsgn editor language, matched to the supplied Framer references.
+   Application chrome only: generated prototype documents retain their own styles. */
+:root, html[data-theme="light"], html[data-theme="dark"], .workspace-shell.workspace-shell, .workspace-shell .app {
+  --bg: #fff;
+  --bg-app: #fff;
+  --bg-panel: #fff;
+  --bg-elevated: #fff;
+  --bg-secondary: #f3f3f3;
+  --bg-subtle: #f3f3f3;
+  --bg-muted: #e8e8e8;
+  --bg-fill-tertiary: #f7f7f7;
+  --bg-fill-secondary: #f3f3f3;
+  --border: #eaeaea;
+  --border-soft: #efefef;
+  --border-strong: #d4d4d4;
+  --border-selected: #0099ff;
+  --text: #333;
+  --text-strong: #222;
+  --text-muted: #777;
+  --text-soft: #999;
+  --text-faint: #bbb;
+  --select-ink: #0099ff;
+  --accent: #0099ff;
+  --accent-strong: #0088ee;
+  --accent-hover: #0088ee;
+  --accent-contrast: #fff;
+  --accent-soft: #dff3ff;
+  --accent-tint: #f0f9ff;
+  --brand: #0099ff;
+  --brand-weak: #bfe7ff;
+  --brand-soft: #e5f5ff;
+  --brand-text: #007acb;
+  --brand-ink: #0088dd;
+  --brand-surface: #e5f5ff;
+  --send-ground: #fff;
+  --send-ink: #0099ff;
+  --upgrade-ground: #0099ff;
+  --upgrade-ink: #fff;
+  --entry-ground: #fff;
+  --veil-shell: #fff;
+  --glass-regular: #fff;
+}
+body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+.workspace-shell, .workspace-shell__body { background: var(--bg); backdrop-filter: none; }
+.workspace-shell input, .workspace-shell textarea, .workspace-shell select, .workspace-shell button { font-family: inherit; }
+.workspace-shell .entry-nav-rail { background: var(--bg); border-right: 1px solid var(--border); }
+.workspace-shell .entry-nav-rail__nav [aria-current], .workspace-shell .entry-nav-rail__nav .is-active { background: var(--bg-subtle); color: var(--text-strong); }
+.workspace-shell .composer-send { background: var(--accent); color: var(--accent-contrast); border-radius: 8px; }
+.workspace-shell .composer-send svg { color: inherit; }
+.workspace-shell .composer, .workspace-shell .chat-composer { border: 1px solid var(--border); background: var(--bg-subtle); border-radius: 16px; box-shadow: none; }
+.workspace-shell .split-chat-slot { background: var(--bg); color: var(--text); }
+.workspace-shell .split-chat-tabs-dock { background: var(--bg); border-bottom: 1px solid var(--border); }
+.workspace-shell .split-chat-tabs-dock::before { content: 'Agent' !important; font-size: 12px; font-weight: 600; }

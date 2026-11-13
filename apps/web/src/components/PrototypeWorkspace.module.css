@@ -1,0 +1,72 @@
+.workspace { --workspace-border: var(--border, #e5e5e5); }
+.workspace :global(.proto-workspace__bar) { height: 64px; gap: 12px; padding: 0 20px; }
+.viewControls { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.segment { display: flex; align-items: center; padding: 3px; border-radius: 24px; background: var(--bg-secondary, #f0f0f0); }
+.segment button { display: flex; align-items: center; gap: 7px; border-radius: 20px; padding: 8px 12px; }
+.segment button[aria-selected=true] { background: var(--bg, white); box-shadow: 0 1px 3px #00000012; }
+.device { display: flex; align-items: center; gap: 7px; }
+.device select { font: inherit; color: inherit; border: 0; background: transparent; padding: 6px 2px; cursor: pointer; }
+.spacer { flex: 1; min-width: 8px; }
+.workspace .create { font-size: 11px; padding: 8px 10px; }
+.workspace :global(.proto-workspace__dock) { padding: 6px; gap: 4px; border-radius: 16px; overflow: visible; bottom: 24px; }
+.workspace :global(.proto-workspace__dock) > button { display: grid; place-items: center; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 10px; }
+.workspace :global(.proto-workspace__dock) > button[aria-pressed=true] { background: var(--text, #272727); color: var(--bg, white); }
+.workspace :global(.proto-workspace__dock) svg { flex-shrink: 0; }
+.modeSwitch { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; background: var(--bg-secondary, #f0f0f0); }
+.modeSwitch button { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; }
+.modeSwitch button[aria-pressed=true] { color: var(--accent, #416bea); background: var(--bg, white); box-shadow: 0 1px 3px #00000012; }
+@media (max-width: 1100px) { .viewControls { gap: 8px; } .workspace :global(.proto-workspace__bar) { padding: 0 12px; gap: 8px; } }
+@media (max-width: 800px) { .device { max-width: 105px; } .segment button { padding: 8px; } }
+
+/* Remove the empty outer chrome row while retaining its Home navigation. */
+:global(body):has(.workspace) :global(.workspace-tabs-chrome.is-docked) { position: absolute; z-index: 40; top: 12px; left: 12px; height: 32px; min-height: 0; width: 32px; padding: 0; border: 0; background: transparent; }
+:global(body):has(.workspace) :global(.workspace-tabs-chrome.is-docked > :not(.workspace-tabs-home-chrome)) { display: none; }
+.workspace :global(.proto-workspace__publish) { gap: 8px; }
+.workspace :global(.proto-workspace__publish .chrome-download-trigger) { background: var(--text, #282828); color: var(--bg, #fff); border-radius: 9px; }
+
+/* The shell reserves a fixed chrome grid row even when its header is absolute. */
+:global(.workspace-shell):has(.workspace) { grid-template-rows: 0 minmax(0, 1fr); --workspace-tabs-chrome-height: 0px; }
+.workspace :global(.proto-workspace__publish button[data-testid="workspace-version-history"]),
+.workspace :global(.proto-workspace__publish button[data-workspace-action="share"]) { background: #f0f0ee; color: #282828; border: 0; border-radius: 9px; height: 36px; padding: 0 12px; }
+.workspace :global(.proto-workspace__publish button[data-testid="workspace-version-history"]) { width: 36px; padding: 0; display: grid; place-items: center; }
+.workspace :global(.proto-workspace__publish button[data-workspace-action="export"]) { background: #282828; color: #fff; border: 0; border-radius: 9px; height: 36px; padding: 0 12px; }
+.workspace :global(.proto-workspace__publish .chrome-file-action-menus),
+.workspace :global(.proto-workspace__publish .chrome-share-menu--unified) { display: flex; align-items: center; gap: 8px; }
+.workspace :global(.proto-workspace__publish button[data-workspace-action]:hover) { filter: brightness(.94); }
+
+/* Framer editor: continuous top bar, pages / canvas / agent columns. */
+:global(.split):has(> .workspace) { display: grid; grid-template-columns: 240px minmax(0, 1fr) 320px; grid-template-rows: 54px minmax(0, 1fr); gap: 0; }
+.workspace, .workspace :global(.proto-workspace__body) { display: contents; }
+.workspace :global(.proto-workspace__bar) { grid-column: 1 / -1; grid-row: 1; height: 54px; padding: 0 12px; gap: 12px; position: relative; background: var(--bg); border-bottom: 1px solid var(--border); }
+:global(.split):has(> .workspace) > :global(.split-chat-slot) { grid-column: 3; grid-row: 2; width: auto; min-width: 0; height: 100%; border-left: 1px solid var(--border); }
+:global(.split):has(> .workspace) > :global(.split-resize-handle) { display: none; }
+.workspace :global(.proto-workspace__inspector) { grid-column: 1; grid-row: 2; width: auto; border: 0; border-right: 1px solid var(--border); }
+.workspace :global(.proto-workspace__stage) { grid-column: 2; grid-row: 2; background: #eee; min-height: 0; }
+.projectTitle { flex: 1; min-width: 0; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 12px; }
+.projectTitle strong { font-weight: 600; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.projectTitle span { color: var(--text-soft); background: var(--bg-subtle); padding: 3px 6px; border-radius: 4px; }
+.segment { background: var(--bg-subtle); border-radius: 8px; padding: 3px; }
+.segment button { border-radius: 6px; font-size: 12px; padding: 7px 10px; font-weight: 500; }
+.segment button[aria-selected=true] { color: var(--text-strong); background: var(--bg); box-shadow: 0 1px 4px #00000015; }
+.workspace .create, .workspace :global(.proto-workspace__publish button[data-workspace-action="export"]) { background: var(--accent); color: var(--accent-contrast); border-radius: 8px; box-shadow: 0 2px 4px #0099ff26; font-size: 12px; height: 32px; padding: 0 12px; }
+.workspace :global(.proto-workspace__publish button[data-workspace-action="share"]), .workspace :global(.proto-workspace__publish button[data-testid="workspace-version-history"]) { background: var(--bg-subtle); border-radius: 8px; height: 32px; }
+.workspace :global(.proto-workspace__panel-tabs) { padding: 10px; gap: 4px; border-bottom: 1px solid var(--border); }
+.workspace :global(.proto-workspace__panel-tabs button) { padding: 7px 10px; border-radius: 8px; font-weight: 500; color: var(--text-soft); }
+.workspace :global(.proto-workspace__panel-tabs button[aria-selected=true]) { background: var(--bg-subtle); color: var(--text-strong); }
+.workspace :global(.proto-workspace__page[aria-current=page]) { background: var(--accent-soft); color: var(--accent); }
+.workspace :global(.proto-workspace__page-icon) { color: var(--accent); }
+.workspace :global(.proto-workspace__screen.is-selected) { outline: 1.5px solid var(--accent); }
+.workspace :global(.proto-workspace__screen-label) { bottom: calc(100% + 12px); padding: 8px 10px; border-radius: 8px; background: #e3e3e3; color: #999; font-weight: 500; }
+.workspace :global(.proto-workspace__screen.is-selected .proto-workspace__screen-label) { background: #cde9f7; color: var(--accent); }
+.workspace :global(.proto-workspace__resize) { border-color: var(--accent); border-radius: 50%; background: var(--accent); }
+.workspace :global(.proto-workspace__dock) { border-radius: 18px; padding: 8px; gap: 4px; box-shadow: 0 2px 6px #00000012; border-color: var(--border); }
+.workspace :global(.proto-workspace__dock > button) { min-width: 34px; height: 34px; color: var(--text-soft); border-radius: 8px; }
+.workspace :global(.proto-workspace__dock > button[aria-pressed=true]) { background: var(--bg-subtle); color: var(--text-strong); }
+.modeSwitch { background: var(--bg-subtle); }
+.modeSwitch button[aria-pressed=true] { color: var(--accent); }
+:global(body):has(.workspace) :global(.workspace-tabs-chrome.is-docked) { display: none; }
+@media (max-width: 1100px) { :global(.split):has(> .workspace) { grid-template-columns: 190px minmax(0, 1fr) 280px; } .projectTitle span { display: none; } .projectTitle strong { max-width: 140px; } }
+@media (max-width: 800px) { :global(.split):has(> .workspace) { grid-template-columns: 140px minmax(0, 1fr); grid-template-rows: 54px minmax(0, 1fr) 240px; } :global(.split):has(> .workspace) > :global(.split-chat-slot) { grid-column: 1 / -1; grid-row: 3; border-left: 0; border-top: 1px solid var(--border); } .projectTitle { display: none; } .viewControls { margin-right: auto; } .workspace :global(.proto-workspace__publish) { gap: 4px; } .workspace .create { padding: 0 8px; } }
+
+.workspace { --accent: #0099ff; --accent-soft: #dff3ff; --accent-contrast: #fff; --text: #333; --text-strong: #222; --bg: #fff; --bg-subtle: #f3f3f3; --border: #eaeaea; }
+@media (max-width: 600px) { :global(.split):has(> .workspace) { grid-template-rows: 92px minmax(0, 1fr) 240px; } .workspace :global(.proto-workspace__bar) { height: 92px; flex-wrap: wrap; gap: 6px; padding: 8px 12px; align-content: center; } .viewControls { flex-basis: 100%; } .workspace :global(.proto-workspace__publish) { margin-right: auto; } .workspace :global(.proto-workspace__panel-tabs) { padding: 8px 4px; gap: 0; } .workspace :global(.proto-workspace__panel-tabs button) { padding: 6px; font-size: 10px; } .workspace :global(.proto-workspace__dock) { transform: none; left: 8px; max-width: calc(100% - 16px); overflow-x: auto; } }

@@ -364,7 +364,8 @@ import {
 } from './html-source-snapshot-cache';
 
 function resolveChromeActionsHost(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(APP_CHROME_FILE_ACTIONS_SELECTOR)
+  return document.querySelector<HTMLElement>('.proto-workspace [data-app-chrome-file-actions="true"]')
+    ?? document.querySelector<HTMLElement>(APP_CHROME_FILE_ACTIONS_SELECTOR)
     ?? document.getElementById(APP_CHROME_FILE_ACTIONS_ID);
 }
 
@@ -1761,6 +1762,7 @@ function getPreviewDocumentEpoch(key: string): string {
 }
 
 interface Props {
+  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile' };
   projectId: string;
   projectKind: TrackingProjectKind;
   file: ProjectFile;
@@ -1922,6 +1924,7 @@ export const FileViewer = memo(function FileViewer({
   onRetainActivityChange,
   onManualEditExitHandlerChange,
   manualEditEntryAllowed = true,
+  workspaceView,
 }: Props) {
   const t = useT();
   // Survives a temporary HtmlViewer unmount while workspace authority refreshes.
@@ -1988,6 +1991,7 @@ export const FileViewer = memo(function FileViewer({
   if (rendererMatch?.renderer.id === 'html' || rendererMatch?.renderer.id === 'deck-html') {
     return (
       <HtmlViewer
+        workspaceView={workspaceView}
         projectId={projectId}
         projectKind={projectKind}
         file={file}
@@ -7303,8 +7307,10 @@ function HtmlViewer({
   workspaceActive = true,
   onRetainActivityChange,
   onManualEditExitHandlerChange,
+  workspaceView,
   manualEditEntryAllowed = true,
 }: {
+  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile' };
   projectId: string;
   projectKind: TrackingProjectKind;
   file: ProjectFile;
@@ -7833,6 +7839,11 @@ function HtmlViewer({
     setPreviewViewportCached(fileViewportKey, viewport);
     setPreviewViewportState(viewport);
   }, [fileViewportKey]);
+  useEffect(() => {
+    if (!workspaceView) return;
+    setMode(workspaceView.mode);
+    setPreviewViewport(workspaceView.viewport);
+  }, [workspaceView?.mode, workspaceView?.viewport, setPreviewViewport]);
   const [zoomMenuOpen, setZoomMenuOpen] = useState(false);
   const zoomMenuRef = useRef<HTMLDivElement | null>(null);
   const [presentMenuOpen, setPresentMenuOpen] = useState(false);
@@ -17750,6 +17761,7 @@ function HtmlViewer({
               // which had un-gated the entry on the reasoning that browsing
               // history is a read action.
               disabled={source === null || viewerOnly}
+              data-testid="workspace-version-history"
               aria-label={t('fileViewer.versions.entry')}
               aria-expanded={Boolean(versionModalOpen)}
               data-tooltip={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.versions.entryFull')}
@@ -17790,6 +17802,7 @@ function HtmlViewer({
                     }
                     aria-haspopup="menu"
                     aria-expanded={deployMenuOpen && unifiedActionTab === 'export'}
+                    data-workspace-action="export"
                     aria-label={t('fileViewer.unifiedExportTab')}
                     disabled={viewerOnly}
                     title={viewerOnly ? viewerOnlyDisabledTitle : undefined}
@@ -17805,6 +17818,7 @@ function HtmlViewer({
                     aria-haspopup="menu"
                     aria-expanded={deployMenuOpen && unifiedActionTab === 'share'}
                     data-artifact-anchor={toolbarMenuAnchorId}
+                    data-workspace-action="share"
                     aria-label={shareMenuLabel}
                     disabled={viewerOnly || !rawCanShare}
                     title={viewerOnly ? viewerOnlyDisabledTitle : !rawCanShare || streaming ? shareUnavailableHint : undefined}
