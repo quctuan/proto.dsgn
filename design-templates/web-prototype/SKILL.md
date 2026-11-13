@@ -99,3 +99,8 @@ index.html
 OpenDesign derives the preview from the written project file. Do not also emit a source-code `<artifact>` block for the same generation turn.
 
 One short summary after writing the file. Nothing after.
+
+
+## Default UI quality skills (proto.dsgn)
+Resolve these bundled skills through the available skills catalogue (`od skills show <id>`); do not assume the project working directory contains the app resources. For UI/prototype work, read the bundled `skills/stageshow/SKILL.md` and relevant references before building, and use its framing, spacing, hierarchy and rehearsal guidance. Apply this to real application components; do not replace working controls with a faux demo.
+For tasks that create or edit Figma UI, also read `skills/figma-design-system-ui/SKILL.md`; reuse the destination design system and check library access. For Figma prototype motion, additionally read `skills/figma-prototype-motion/SKILL.md`. These Figma workflows require connected Figma tools and are not mandatory for local HTML/React work. Do not block local UI generation on Figma access. Preserve the supplied product references, and verify the rendered result before handoff.

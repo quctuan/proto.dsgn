@@ -404,6 +404,21 @@ export function browserElementPickerScript(filePath: string): string {
   function styleSnapshot(el) {
     const s = window.getComputedStyle(el);
     return {
+        width: s.width,
+        height: s.height,
+        display: s.display,
+        position: s.position,
+        gap: s.gap,
+        flexDirection: s.flexDirection,
+        justifyContent: s.justifyContent,
+        alignItems: s.alignItems,
+        margin: s.margin,
+        border: s.border,
+        boxShadow: s.boxShadow,
+        opacity: s.opacity,
+        letterSpacing: s.letterSpacing,
+        overflow: s.overflow,
+        transform: s.transform,
       color: s.color,
       backgroundColor: s.backgroundColor,
       fontSize: s.fontSize,
@@ -444,6 +459,7 @@ export function browserElementPickerScript(filePath: string): string {
       },
       hoverPoint: ev ? { x: Math.round(ev.clientX), y: Math.round(ev.clientY) } : undefined,
       htmlHint: htmlHint.slice(0, 220),
+      componentName: el.getAttribute('data-component') || el.getAttribute('data-od-component') || '',
       style: styleSnapshot(el),
       selectionKind: 'element'
     };

@@ -219,6 +219,8 @@ const residualAllowedPathPrefixes = [
 ];
 
 const residualAllowedPathPatterns: RegExp[] = [
+  // Upstream Stageshow skill scripts are vendored verbatim from quctuan/Mew-Design.
+  /^skills\/stageshow\/scripts\/[^/]+\.mjs$/,
   // Vendored upstream Zara template runtimes — one design template per template,
   // name prefix `html-ppt-zhangzara-` (zarazhangrui/beautiful-html-templates).
   // Only the vendored deck-stage runtime asset is allowlisted; any other

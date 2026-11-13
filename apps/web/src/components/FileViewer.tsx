@@ -546,7 +546,11 @@ const COMMENT_SIDE_DOCK_STACKED_COLLAPSED_HEIGHT_DEDUCTION =
 // purpose — open-slide's design tokens panel only edits global tokens, so
 // the per-element delta is small + obvious + cheap to read back from
 // getComputedStyle on the iframe side.
-type InspectStyleSnapshot = {
+export type InspectStyleSnapshot = {
+  width?: string; height?: string; display?: string; position?: string;
+  gap?: string; flexDirection?: string; justifyContent?: string; alignItems?: string;
+  margin?: string; border?: string; boxShadow?: string; opacity?: string;
+  letterSpacing?: string; overflow?: string; transform?: string;
   color?: string;
   backgroundColor?: string;
   fontSize?: string;
@@ -566,7 +570,9 @@ type InspectClickedDescendant = {
   text: string;
 };
 
-type InspectTarget = {
+export type InspectTarget = {
+  bounds?: { x: number; y: number; width: number; height: number };
+  componentName?: string;
   elementId: string;
   selector: string;
   label: string;
@@ -1762,7 +1768,8 @@ function getPreviewDocumentEpoch(key: string): string {
 }
 
 interface Props {
-  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile' };
+  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile'; inspect?: boolean; inspectSelection?: string | null };
+  onInspectTargetChange?: (target: InspectTarget | null) => void;
   projectId: string;
   projectKind: TrackingProjectKind;
   file: ProjectFile;
@@ -1925,6 +1932,7 @@ export const FileViewer = memo(function FileViewer({
   onManualEditExitHandlerChange,
   manualEditEntryAllowed = true,
   workspaceView,
+  onInspectTargetChange,
 }: Props) {
   const t = useT();
   // Survives a temporary HtmlViewer unmount while workspace authority refreshes.
@@ -1992,6 +2000,7 @@ export const FileViewer = memo(function FileViewer({
     return (
       <HtmlViewer
         workspaceView={workspaceView}
+        onInspectTargetChange={onInspectTargetChange}
         projectId={projectId}
         projectKind={projectKind}
         file={file}
@@ -7308,9 +7317,11 @@ function HtmlViewer({
   onRetainActivityChange,
   onManualEditExitHandlerChange,
   workspaceView,
+  onInspectTargetChange,
   manualEditEntryAllowed = true,
 }: {
-  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile' };
+  workspaceView?: { mode: 'preview' | 'source'; viewport: 'desktop' | 'tablet' | 'mobile'; inspect?: boolean; inspectSelection?: string | null };
+  onInspectTargetChange?: (target: InspectTarget | null) => void;
   projectId: string;
   projectKind: TrackingProjectKind;
   file: ProjectFile;
@@ -8728,6 +8739,9 @@ function HtmlViewer({
   const [commentCreateMode, setCommentCreateMode] = useState(false);
   const [boardTool, setBoardTool] = useState<BoardTool>('inspect');
   const [inspectMode, setInspectMode] = useState(false);
+  useEffect(() => {
+    if (workspaceView?.inspect !== undefined) setInspectMode(workspaceActive && workspaceView.inspect);
+  }, [workspaceView?.inspect, workspaceActive]);
   const [agentToolsOpen, setAgentToolsOpen] = useState(false);
   const [drawOverlayOpen, setDrawOverlayOpen] = useState(false);
   // for hint managing hint box state
@@ -9575,6 +9589,9 @@ function HtmlViewer({
   // are preview acknowledgements and never feed save input, so artifact JS
   // forging a postMessage cannot tamper with what gets persisted.
   const [activeInspectTarget, setActiveInspectTarget] = useState<InspectTarget | null>(null);
+  useEffect(() => {
+    if (workspaceActive) onInspectTargetChange?.(workspaceView?.inspect ? activeInspectTarget : null);
+  }, [workspaceActive, workspaceView?.inspect, activeInspectTarget, onInspectTargetChange]);
   const [inspectOverrides, setInspectOverrides] = useState<InspectOverrideMap>(() =>
     typeof source === 'string' ? parseInspectOverridesFromSource(source) : {},
   );
@@ -12811,6 +12828,11 @@ function HtmlViewer({
     win.postMessage({ type: 'od:inspect-mode', enabled: inspectMode }, '*');
   }, [inspectMode, srcDoc, useUrlLoadPreview, workspaceActive]);
 
+  useEffect(() => {
+    if (!workspaceActive || !workspaceView?.inspect) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: 'od:inspect-selection', selector: workspaceView.inspectSelection ?? null }, '*');
+  }, [workspaceActive, workspaceView?.inspect, workspaceView?.inspectSelection, srcDoc, useUrlLoadPreview]);
+
   const commentTargetsKey = JSON.stringify([projectId, file.name, srcDoc, useUrlLoadPreview, reloadKey]);
   // Only a current target report or a paired locate failure can establish loss.
   // Saved boxes/text never supply location evidence; an unwitnessed document is pending.
@@ -14290,9 +14312,12 @@ function HtmlViewer({
             label?: string;
             text?: string;
             style?: InspectStyleSnapshot;
+            position?: InspectTarget['bounds'];
+            componentName?: string;
             clickedDescendant?: Partial<InspectClickedDescendant>;
           }
         | null;
+      if (data?.type === 'od:inspect-clear') { setActiveInspectTarget(null); return; }
       if (!data || data.type !== 'od:comment-target') return;
       if (!data.elementId || !data.selector) return;
       const clickedDescendant =
@@ -14304,6 +14329,8 @@ function HtmlViewer({
           : null;
       setActiveInspectTarget({
         elementId: String(data.elementId),
+        bounds: data.position,
+        componentName: typeof data.componentName === 'string' ? data.componentName : undefined,
         selector: String(data.selector),
         label: String(data.label || ''),
         text: String(data.text || ''),
@@ -18593,7 +18620,7 @@ function HtmlViewer({
               : commentPortalId
                 ? null
                 : commentSidePanel}
-            {inspectMode && activeInspectTarget ? (
+            {inspectMode && activeInspectTarget && !workspaceView?.inspect ? (
               <InspectPanel
                 target={activeInspectTarget}
                 onApply={(prop, value) => {

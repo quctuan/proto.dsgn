@@ -1,3 +1,4 @@
+import { INSPECT_SELECTION_OVERLAY_SCRIPT } from './inspect-selection-overlay';
 import { buildPreviewStorageBridge } from './preview-storage';
 import { injectMotionSourcePlayer, markMotionHostedPreview } from '@open-design/contracts/runtime/motion-source-player';
 /**
@@ -1806,6 +1807,7 @@ function injectSelectionBridge(
   var commentEnabled = ${initialComment};
   var inspectEnabled = ${initialInspect};
   var runtimeStateGeneration = ${runtimeStateGeneration};
+${INSPECT_SELECTION_OVERLAY_SCRIPT}
   // Comment mode has two sub-tools (kept on the host side as boardTool):
   //   'picker' — click-to-select an element for annotation.
   //   'pod'    — pointer-drag a freeform stroke that the host turns into a
@@ -1969,6 +1971,21 @@ function injectSelectionBridge(
     try {
       var cs = window.getComputedStyle(el);
       return {
+        width: cs.width,
+        height: cs.height,
+        display: cs.display,
+        position: cs.position,
+        gap: cs.gap,
+        flexDirection: cs.flexDirection,
+        justifyContent: cs.justifyContent,
+        alignItems: cs.alignItems,
+        margin: cs.margin,
+        border: cs.border,
+        boxShadow: cs.boxShadow,
+        opacity: cs.opacity,
+        letterSpacing: cs.letterSpacing,
+        overflow: cs.overflow,
+        transform: cs.transform,
         color: cs.color,
         backgroundColor: cs.backgroundColor,
         fontSize: cs.fontSize,
@@ -2110,6 +2127,7 @@ function meaningfulDomFallbackTarget(el) {
       text: (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 160),
       position: position,
       htmlHint: html.slice(0, 180),
+      componentName: el.getAttribute('data-component') || el.getAttribute('data-od-component') || '',
       style: styleSnapshot(el)
     };
     var slideIndex = deckSlideIndexForPayload();
@@ -2718,8 +2736,16 @@ function meaningfulDomFallbackTarget(el) {
       return;
     }
 
+    if (data.type === 'od:inspect-selection') {
+      if (ev.source !== window.parent) return;
+      var picked = null;
+      try { if (typeof data.selector === 'string') picked = document.querySelector(data.selector); } catch (_) {}
+      inspectSelectionOverlay.select(picked, data.selector);
+      return;
+    }
     if (data.type === 'od:inspect-mode') {
       inspectEnabled = !!data.enabled;
+      if (!inspectEnabled) inspectSelectionOverlay.clear();
       document.documentElement.toggleAttribute('data-od-inspect-mode', inspectEnabled);
       if (active()) setTimeout(postTargets, 0);
       else hoveredId = null;
@@ -2812,6 +2838,7 @@ function meaningfulDomFallbackTarget(el) {
       if (payload) {
         activeCommentElementId = payload.elementId || activeCommentElementId;
         activeCommentSelector = payload.selector || activeCommentSelector;
+        if (inspectEnabled) inspectSelectionOverlay.select(result.target, payload.selector);
         window.parent.postMessage(payload, '*');
       }
       return;

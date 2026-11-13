@@ -15141,6 +15141,8 @@ export function ProjectView({
           />
         ) : null}
         {!designSystemProject && !projectMutationReadOnly ? <PrototypeWorkspace
+          conversationCollapsed={workspaceFocused}
+          onConversationCollapsedChange={setWorkspaceFocused}
           projectId={project.id}
           projectName={currentProject.name}
           files={projectFiles}

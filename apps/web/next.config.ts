@@ -196,6 +196,7 @@ export function cmsHostReleaseFingerprint(
 }
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   env: {
     // Embedded in the client at build time. Packaged servers use the already
     // compiled client and need not retain source files to load this config.
@@ -251,9 +252,7 @@ const nextConfig: NextConfig = {
             { source: '/frames/:path*', destination: `${DAEMON_ORIGIN}/frames/:path*` },
           ];
         },
-        devIndicators: {
-          position: 'bottom-right',
-        },
+        devIndicators: false,
       }
       : {}),
 };
