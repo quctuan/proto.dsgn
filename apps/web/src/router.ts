@@ -76,6 +76,12 @@ export type Route =
 export function parseRoute(pathname: string): Route {
   const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
   if (parts.length === 0) return { kind: 'home', view: 'home' };
+  if (['community', 'members', 'board', 'workspace-settings', 'collab-demo'].includes(parts[0] ?? '')) {
+    return { kind: 'home', view: 'home' };
+  }
+  if (['skills', 'plugins', 'marketplace'].includes(parts[0] ?? '')) {
+    return { kind: 'home', view: 'plugins' };
+  }
   if (parts[0] === 'onboarding') {
     return { kind: 'home', view: 'onboarding' };
   }
@@ -180,7 +186,7 @@ export function buildPath(route: Route): string {
     if (route.view === 'onboarding') return '/onboarding';
     if (route.view === 'projects') return '/projects';
     if (route.view === 'tasks') return '/automations';
-    if (route.view === 'plugins') return '/plugins';
+    if (route.view === 'plugins') return '/skills';
     if (route.view === 'design-systems') return '/design-systems';
     if (route.view === 'library') return LIBRARY_UI_VISIBLE ? '/library' : '/';
     if (route.view === 'brands') {

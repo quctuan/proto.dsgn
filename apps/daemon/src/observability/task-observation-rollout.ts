@@ -257,7 +257,7 @@ export function readTaskObservationRolloutConfig(
         ? rawMode
         : 'invalid';
   const mode: TaskObservationRolloutMode = rawMode === undefined || rawMode === '' || rawMode === 'auto'
-    ? 'send'
+    ? 'off'
     : rawMode === 'observe' || rawMode === 'send' || rawMode === 'off'
       ? rawMode
       : 'off';

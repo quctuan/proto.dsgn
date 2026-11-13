@@ -1,3 +1,4 @@
+import { isPrototypeSkill } from '@open-design/contracts';
 import { prepareAmrWebUrl } from "./amr-web-intent";
 import {
   PUBLIC_FILE_MANUAL_REVOKE_REQUIRED,
@@ -347,7 +348,7 @@ export async function fetchSkills(
     if (!resp.ok) { observeCatalogRead(options, false); return []; }
     const json = (await resp.json()) as { skills: SkillSummary[] };
     observeCatalogRead(options, Array.isArray(json.skills));
-    return json.skills ?? [];
+    return (json.skills ?? []).filter(isPrototypeSkill);
   } catch {
     observeCatalogRead(options, false);
     return [];
@@ -1444,7 +1445,7 @@ export interface ConnectorActionResult {
 }
 
 function popupBlockedMessage(): string {
-  return 'Popup blocked. Allow popups for OpenDesign and try again.';
+  return 'Popup blocked. Allow popups for proto.dsgn and try again.';
 }
 
 export async function openExternalUrl(url: string): Promise<boolean> {

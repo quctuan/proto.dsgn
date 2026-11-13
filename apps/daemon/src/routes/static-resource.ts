@@ -1,3 +1,4 @@
+import { isPrototypeSkill } from '@open-design/contracts';
 import type { Express, Response } from 'express';
 import type Database from 'better-sqlite3';
 import path from 'node:path';
@@ -513,7 +514,7 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
       // Strip full body + on-disk dir from the listing — frontend fetches the
       // body via /api/skills/:id when needed (keeps the listing payload small).
       res.json({
-        skills: skills.map(({ body, dir: _dir, ...rest }) => ({
+        skills: skills.filter(isPrototypeSkill).map(({ body, dir: _dir, ...rest }) => ({
           ...rest,
           hasBody: typeof body === 'string' && body.length > 0,
         })),

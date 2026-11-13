@@ -202,7 +202,7 @@ export const SPLASH_PIXEL_SCAN_STYLE = `
 `;
 
 export const SPLASH_PIXEL_SCAN_MARKUP = `
-    <div id="splash-logo" role="img" aria-label="Open Design">
+    <div id="splash-logo" role="img" aria-label="proto.dsgn">
       <canvas id="splash-canvas"></canvas>
     </div>
 `;

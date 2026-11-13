@@ -46,7 +46,7 @@ import {
 } from "@open-design/sidecar";
 
 import { createDesktopRuntime, type DesktopRuntime } from "./runtime.js";
-import { dispatchInviteDeeplink, registerInviteDeeplink } from "./invite-deeplink.js";
+
 import { focusDesktopForDeeplink } from "./deeplink-focus.js";
 import { setUpDesktopCrashReporter, writeDesktopGpuInfo } from "./crash-diagnostics.js";
 import { beginDesktopSession, clearReportedCrash, endDesktopSessionCleanly, markDesktopSessionRunning, recordDesktopHostEvent, recordDesktopSessionExit } from "./session-lifecycle.js";
@@ -1010,7 +1010,7 @@ async function runDesktopMainWithTiming(
             return activeDesktop.console();
           case SIDECAR_MESSAGES.SHOW:
             activeDesktop.show();
-            dispatchInviteDeeplink(request.input?.deeplinkUrl ?? null);
+
             notifyDesktopExternalShow(options.onExternalShow);
             return { accepted: true };
           case SIDECAR_MESSAGES.CLICK:
@@ -1120,7 +1120,7 @@ async function runDesktopMainWithTiming(
   }
   console.info("[open-design desktop] desktop runtime created");
   options.onDesktopReady?.({
-    dispatchInviteDeeplink,
+    dispatchInviteDeeplink: () => {},
     show: () => {
       void Promise.resolve(options.onExternalShow?.()).finally(() => desktop?.show());
     },
@@ -1153,15 +1153,6 @@ async function runDesktopMainWithTiming(
   );
   removeDiagnosticsIpc = registerDesktopDiagnosticsIpc({
     discoverDaemonBaseUrl: resolveDaemonBaseUrl(options),
-  });
-  // Route opendesign:// team-invite deeplinks to the daemon (desktop wake-up).
-  registerInviteDeeplink({
-    resolveDaemonBaseUrl: resolveDaemonBaseUrl(options),
-    focus: () => focusDesktopForDeeplink(desktop),
-    onCompleted: (outcome) => {
-      console.info("[open-design desktop] invite deeplink continuation completed", outcome);
-    },
-    protocolClientPath: options.inviteProtocolClientPath,
   });
   const discoverUpdaterAppConfigBaseUrl = resolveDaemonBaseUrl(options);
   updateScheduler = createDesktopUpdaterScheduler(updater, {

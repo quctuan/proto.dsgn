@@ -1,4 +1,3 @@
-import { ReferralEntry } from './ReferralEntry';
 import { openExternalUrl } from "../providers/registry";
 import { CodingPlanUsage } from './CodingPlanUsage';
 import { WorkspaceQuotaPopover } from './WorkspaceQuotaPopover';
@@ -76,7 +75,6 @@ import { GITHUB_STARS_FALLBACK_LABEL, formatStars, useGithubStars } from './useG
 import { PlanWordmark, planBadgeTierForWorkspace } from './PlanWordmark';
 import { MarqueeLabel } from './MarqueeLabel';
 import { RemixIcon } from './RemixIcon';
-import { InviteDialog } from './InviteDialog';
 import {
   closeRailRecentRowMenu,
   openRailRecentRowMenu,
@@ -1178,7 +1176,7 @@ export function EntryTopRightCluster({
   const [logoutSnapshot,setLogoutSnapshot] = useState<VelaLoginStatus | null>(null);
   const [logoutBusy,setLogoutBusy] = useState(false);
   const [accountStatus,setAccountStatus] = useState<VelaLoginStatus | null>(null);
-  const githubStars = useGithubStars();
+
   // Signed-in account email for the menu head (#5517 shows it under the
   // display name). The workspace context carries no email, so lazily read the
   // vela login-status projection the first time the menu opens — never on
@@ -1385,126 +1383,18 @@ export function EntryTopRightCluster({
     <>
       {createPortal(
         <div className={clusterVisible ? 'entry-top-right-cluster' : undefined}>
-          {leadingSlot}
+
           {/* GitHub star chip: its own option in the cluster, right after the
               campaign badge (per product) — it used to live in the account
               menu's social row. */}
-          {clusterVisible ? (
-            <a
-              className="entry-top-right-github"
-              href={REPO_URL}
-              {...externalLinkProps}
-              aria-label={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
-              title={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
-              data-testid="entry-top-right-github"
-              onClick={() => trackAccountAction('github')}
-            >
-              {/* 15, not the wordmark's 14: the octocat only fills 81% of its
-                  24-unit viewBox while the plan wordmark fills 90% of its own, so
-                  equal box heights drew an optically smaller mark. 15 puts the
-                  two drawn glyphs on the same ~12.5px height. */}
-              <Icon name="github-filled" size={15} />
-              <span>{githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)}</span>
-            </a>
-          ) : null}
-          {inviteSlot}
+
+
           {/* The capsule holds the credits segment alone — the avatar moved
               to the rail, and with it the account menu's hover region. The
               anchor around it owns the hover region for the billing panel
               below: the panel is a DOM child, so crossing from the pill into
               it never leaves the anchor and never arms the close. */}
-          {context && showCreditsPill ? (
-            <div
-              ref={creditsAnchorRef}
-              className="entry-top-right-credits-anchor"
-              onPointerEnter={openCreditsPanel}
-              onPointerLeave={scheduleCreditsPanelClose}
-              onFocus={openCreditsPanel}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) scheduleCreditsPanelClose();
-              }}
-            >
-              <div
-                className={`entry-top-right-account-pill${showUpgradePill ? ' entry-top-right-account-pill--upgrade' : ''}${quotaView.sharedBilling ? ` ${styles.sharedQuotaPill}` : ''}`}
-              >
-                <button
-                  type="button"
-                  className="entry-top-right-credits"
-                  data-testid="entry-top-right-credits"
-                  aria-haspopup="dialog"
-                  aria-busy={!quotaView.planKnown || undefined}
-                  aria-expanded={creditsPanelOpen}
-                  aria-controls={creditsPanelOpen ? creditsPanelId : undefined}
-                  aria-label={showUpgradePill ? t('entry.creditsUpgrade') : t('entry.credits')}
-                  onClick={() => {
-                    // Clicking, hovering or focusing opens the quota panel.
-                    trackAccountAction('credits');
-                    openCreditsPanel();
-                  }}
-                >
-                  {!quotaView.planKnown ? (
-                    <span className={styles.planLoading} aria-label={t('common.loading')} />
-                  ) : showUpgradePill ? (
-                    /* Owner's Free plan: the pill stops reporting a balance that is only
-                       ever 0.00 and sells the upgrade instead — spark mark plus
-                       the same 升级 / Upgrade label the billing card uses, on
-                       the green ground the wrapper paints. */
-                    <>
-                      <UpgradeSparkMark />
-                      {t('entry.creditsUpgrade')}
-                    </>
-                  ) : (
-                    <>
-                      {/* Leads with the workspace's plan wordmark (plus / pro /
-                          max / team) rather than a generic charge glyph, so the
-                          chip names the membership it belongs to. The battery
-                          icon stays as the fallback for the rare tier string no
-                          wordmark matches — without it the chip would be a
-                          bare, unlabelled number. */}
-                      {/* The mark alone, at the design's 16px. The balance
-                          moved off the capsule entirely (design + its
-                          electron-panel.png): the number lives in the card the
-                          capsule opens. The battery glyph stays as the
-                          fallback for a tier string no wordmark matches —
-                          without it the capsule would be empty. */}
-                      {planTier ? (
-                        <PlanWordmark tier={planTier} height={16} variant={quotaView.sharedBilling ? 'seats-phase1' : undefined} />
-                      ) : (
-                        <RemixIcon name="battery-charge-line" size={16} />
-                      )}
-                    </>
-                  )}
-                </button>
-              </div>
-              {/* #5517 billing card, relocated: plan (+badge) + 升级 CTA + USD
-                  balance, hanging under the pill it describes. The balance row
-                  links out to B's console. It receives only an explicitly
-                  scoped money value; raw credits are never formatted as
-                  dollars here. */}
-              {creditsPanelOpen ? (
-                <div
-                  id={creditsPanelId}
-                  role="dialog"
-                  aria-label={t('entry.credits')}
-                  className={`entry-top-right-credits-panel ${planCardStyles.panel}`}
-                  data-testid="entry-top-right-credits-panel"
-                >
-                  <WorkspaceQuotaPopover
-                    view={quotaView}
-                    context={context}
-                    profile={workspaceQuotaStatus?.profile ?? priorityAnnouncementAmrProfile}
-                    consoleOrigin={workspaceQuotaStatus?.consoleOrigin}
-                    badgeTier={planTier}
-                    planLabel={tierLabel}
-                    onNavigate={(action) => {
-                      trackAccountAction(action);
-                      setCreditsPanelOpen(false);
-                    }}
-                  />
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+
           {/* Update-ready rocket, top-right home: signed-out shells, the
               project route, and a narrow window whose rail is auto-collapsed
               keep it here. Otherwise it rides the account row — see the dock
@@ -1530,7 +1420,7 @@ export function EntryTopRightCluster({
       {accountInRail
         ? createPortal(
             <div className="entry-nav-rail__account-dock">
-              <RailSocialRow page={page} dimensions={workspaceDimensions} />
+
               <div
                 ref={accountContainerRef}
                 className={`entry-nav-rail__account${accountOpen ? ' is-menu-open' : ''}`}
@@ -1638,23 +1528,7 @@ export function EntryTopRightCluster({
                           are never split across two destinations. Gated on
                           the URL: without a console to reach, the row would
                           be a dead click. */}
-                      {accountBillingUrl ? (
-                        <a
-                          className="entry-nav-rail__menu-item"
-                          role="menuitem"
-                          href={accountBillingUrl}
-                          {...externalLinkProps}
-                          data-testid="entry-account-billing"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            void openExternalUrl(accountBillingUrl);
-                            trackAccountAction('billing');
-                            closeAccountMenu();
-                          }}
-                        >
-                          <RemixIcon name="wallet-line" size={15} /> {t('entry.accountBilling')}
-                        </a>
-                      ) : null}
+
                       {/* #5517's account menu went 设置 → GitHub 帮助 → 功能建议 →
                           社交行, with no theme row, no language submenu, and no
                           divider in between. Both of those controls still have
@@ -1663,30 +1537,8 @@ export function EntryTopRightCluster({
                           capability. 设置 itself left too: it is a rail item
                           under 插件 on this branch, and repeating it here would
                           be the same dialog twice in one column. */}
-                      <a
-                        className="entry-nav-rail__menu-item"
-                        role="menuitem"
-                        href={GITHUB_HELP_URL}
-                        {...externalLinkProps}
-                        onClick={() => {
-                          trackAccountAction('github_help');
-                          closeAccountMenu();
-                        }}
-                      >
-                        <Icon name="comment" size={15} /> {t('entry.accountGithubHelp')}
-                      </a>
-                      <a
-                        className="entry-nav-rail__menu-item"
-                        role="menuitem"
-                        href={GITHUB_FEATURE_URL}
-                        {...externalLinkProps}
-                        onClick={() => {
-                          trackAccountAction('feature_request');
-                          closeAccountMenu();
-                        }}
-                      >
-                        <Icon name="sparkles" size={15} /> {t('entry.accountFeatureRequest')}
-                      </a>
+
+
                       <div className="entry-nav-rail__menu-divider" />
                       <button
                         type="button"
@@ -2385,29 +2237,7 @@ export function EntryNavRail({
                     data-testid="workspace-switcher-actions"
                   >
                     <div className="entry-nav-rail__menu-divider" />
-                    {canAccessInviteFlow && inviteTarget.kind !== 'unavailable' ? (
-                      <button
-                        type="button"
-                        className="entry-nav-rail__menu-item"
-                        role="menuitem"
-                        onClick={() => {
-                          trackWorkspaceSwitcherClick(analytics.track, {
-                            page_name: analyticsPage,
-                            area: 'workspace_switcher',
-                            element: 'invite_teammates',
-                            ...workspaceDimensions,
-                          });
-                          setTeamOpen(false);
-                          if (inviteTarget.kind === 'vela') {
-                            void openExternalUrl(inviteTarget.url);
-                          } else if (inviteTarget.kind === 'local') {
-                            setInviteOpen(true);
-                          }
-                        }}
-                      >
-                        <Icon name="share" size={15} /> {t('workspaceSwitcher.invite')}
-                      </button>
-                    ) : null}
+
                     {/* Creating a workspace is a B console flow (its sidebar owns the
                         create dialog; there is no route or query param that opens it
                         directly), so this entry links OUT instead of doing local work.
@@ -2463,15 +2293,7 @@ export function EntryNavRail({
         >
           <Icon name="home" size={16} />
         </NavButton>
-        <NavButton
-          active={view === 'community'}
-          ariaLabel={communityLabel}
-          label={communityLabel}
-          onClick={() => selectView('community')}
-          testId="entry-nav-community"
-        >
-          <Icon name="globe" size={16} />
-        </NavButton>
+
 
         {context ? (
           <div className="entry-nav-rail__team-section">
@@ -2637,7 +2459,7 @@ export function EntryNavRail({
             the account module into. `display: contents` keeps the account
             dock itself a flex child of this group, so its own `order: 99` +
             `margin-top: auto` still push it below the nav items. */}
-        {isHome && !referralCompact ? <ReferralEntry /> : null}
+
         {context ? <div ref={setAccountHost} className="entry-nav-rail__account-host" /> : null}
       </div>
       {/* Signed in, the social links ride the account dock above the identity
@@ -2658,7 +2480,7 @@ export function EntryNavRail({
             className="entry-nav-rail__account-dock entry-nav-rail__account-dock--local"
             data-testid="entry-nav-local-account-dock"
           >
-            <RailSocialRow page={analyticsPage} dimensions={workspaceDimensions} />
+
           </div>
         </div>
       )}
@@ -2681,13 +2503,7 @@ export function EntryNavRail({
         />
       )}
 
-      <InviteDialog
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        workspaceContext={context}
-        canAssignRoles={context?.role === 'owner'}
-        entryFrom="workspace_switcher"
-      />
+
       {/* Top-right chrome cluster: campaign badge (slot) + credits pill,
           mounted into the tabs chrome's no-drag actions host so Electron
           includes it in the first native hit map; the account module it owns

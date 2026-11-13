@@ -690,9 +690,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     // its badge counts the previewed slice — not the full staged total — to keep
     // the count aligned with what that tab actually renders. The dedicated files
     // tab below lists every match and reports the true total.
-    { id: 'all', label: t('common.all'), count: Math.min(fileMatches.length, HOME_MENTION_ALL_TAB_PREVIEW) + pluginMatches.length + skillMatches.length + mcpMatches.length + connectorMatches.length },
+    { id: 'all', label: t('common.all'), count: Math.min(fileMatches.length, HOME_MENTION_ALL_TAB_PREVIEW) + skillMatches.length + mcpMatches.length + connectorMatches.length },
     { id: 'files', label: t('chat.mentionTabFiles'), count: fileMatches.length },
-    { id: 'plugins', label: t('entry.navPlugins'), count: pluginMatches.length },
     { id: 'skills', label: t('homeHero.skills'), count: skillMatches.length },
     { id: 'mcp', label: 'MCP', count: mcpMatches.length },
     { id: 'connectors', label: 'Connectors', count: connectorMatches.length },
@@ -714,22 +713,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
             description: file.type || t('chat.mentionTabFiles'),
             meta: formatFileSize(file.size),
             onPick: () => pickFile(file),
-          })),
-        }
-      : null,
-    showPlugins
-      ? {
-          id: 'plugins',
-          label: t('entry.navPlugins'),
-          options: pluginMatches.map((plugin) => ({
-            id: `plugin-${plugin.id}`,
-            icon: 'sparkles',
-            title: localizePluginTitle(locale, plugin),
-            description: localizePluginDescription(locale, plugin) || plugin.id,
-            meta: pendingPluginId === plugin.id ? t('homeHero.applying') : getPluginSourceLabel(plugin),
-            pluginRecord: plugin,
-            disabled: pendingPluginId !== null,
-            onPick: () => pickPlugin(plugin),
           })),
         }
       : null,
@@ -1561,7 +1544,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
       }
     >
       {isDock ? null : referralNotice}
-      {isDock ? null : <div className={referralNoticeStyles.inviteSurface} data-home-invite-surface>{inviteSurface}</div>}
+
       {/* Hero header: one plain question. The animated pixel-scan wordmark that
           used to stand here is gone (per product) — the headline carries the
           moment instead, with no motion behind it. */}
@@ -2558,61 +2541,11 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
           question the pill had just answered. The examples below now show the
           picked type's full set. */}
 
-      {!isDock && !activeChipId ? (
-        <TypePillRow
-          chips={templateChips}
-          activeChipId={null}
-          disabled={pluginsLoading || typeSelectionPending || pendingChipId !== null || pendingPluginId !== null}
-          labelFor={(id) => homeHeroChipLabel(id, t)}
-          onPick={handlePickTaskChip}
-        />
-      ) : null}
+
 
       {isDock ? null : recommendationSlot}
 
-      {isDock ? null : examplePluginPresets.length > 0 && activeChipId ? (
-        <PluginPromptPresets
-          chipId={activeChipId}
-          plugins={examplePluginPresets}
-          activePluginId={activePluginRecord?.id ?? null}
-          pendingPluginId={pendingPluginId}
-          locale={locale}
-          onPick={pickExamplePluginPreset}
-          onPreview={onOpenPluginDetails}
-          pulseFirstPreset={guidePulseFirstPreset}
-          workspaceContext={workspaceContext}
-        />
-      ) : activePromptExamples.length > 0 ? (
-        <div
-          className="home-hero__prompt-examples"
-          data-testid="home-hero-prompt-examples"
-        >
-          <div
-            className={`home-hero__prompt-examples-grid${activeChipId === 'web-clone' ? ' home-hero__prompt-examples-grid--sites' : ''}`}
-          >
-            {activePromptExamples.map((example, index) =>
-              webCloneExampleSite(example) ? (
-                <WebClonePromptExampleCard
-                  key={example}
-                  example={example}
-                  pulse={guidePulseFirstPreset && index === 0}
-                  onPick={usePromptExample}
-                />
-              ) : (
-                <button
-                  key={example}
-                  type="button"
-                  className={`home-hero__prompt-example${guidePulseFirstPreset && index === 0 ? ' home-hero__attention-sheen' : ''}`}
-                  data-testid="home-hero-prompt-example"
-                  onClick={() => usePromptExample(example)}
-                >
-                  <span>{example}</span>
-                </button>
-              ),
-            )}
-          </div>
-        </div>
-      ) : null}
+
 
       {error ? (
         <div role="alert" className="home-hero__error">

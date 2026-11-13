@@ -3505,32 +3505,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               aria-hidden="true"
               onClick={dismissStandalonePanels}
             />
-            <div
-              className="plus-menu__popup composer-toolbox-standalone-popup composer-plugins-standalone-popup"
-              data-testid="composer-plugins-popup"
-              role="menu"
-              onMouseEnter={cancelComposerPanelClose}
-              onMouseLeave={scheduleComposerPanelClose}
-            >
-              <StandalonePluginsPane
-                workspaceContext={workspaceContext}
-                plugins={pluginsForComposer}
-                onPick={(record) => {
-                  trackComposerBar({
-                    element: 'plus_pick',
-                    resource_kind: 'plugin',
-                    resource_id: record.id,
-                  });
-                  void insertPluginMention(record);
-                  setPluginsPanelOpen(false);
-                }}
-                onAdd={onBrowsePlugins ? () => {
-                  trackComposerBar({ element: 'plus_add', resource_kind: 'plugin' });
-                  setPluginsPanelOpen(false);
-                  onBrowsePlugins();
-                } : undefined}
-              />
-            </div>
+
           </div>
         ) : null}
         <div
@@ -6588,14 +6563,13 @@ function MentionPopover({
     { id: 'all', label: t('chat.mentionTabAll') },
     { id: 'files', label: t('chat.mentionTabFiles') },
     { id: 'tabs', label: t('chat.mentionTabTabs') },
-    { id: 'plugins', label: t('chat.mentionTabPlugins') },
     { id: 'skills', label: t('chat.mentionTabSkills') },
     { id: 'mcp', label: t('chat.mentionTabMcp') },
     { id: 'connectors', label: t('chat.mentionTabConnectors') },
   ];
   const showTabs = tab === 'all' || tab === 'tabs';
   const showFiles = tab === 'all' || tab === 'files';
-  const showPlugins = tab === 'all' || tab === 'plugins';
+  const showPlugins = false;
   const showSkills = tab === 'all' || tab === 'skills';
   const showMcp = tab === 'all' || tab === 'mcp';
   const showConnectors = tab === 'all' || tab === 'connectors';

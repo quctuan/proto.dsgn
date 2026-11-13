@@ -194,7 +194,7 @@ async function main(): Promise<void> {
     });
     if (existingOwner != null) {
       throw new Error(
-        `Cannot install MCP while the existing ${existingOwner.stamp.mode} desktop runtime has no healthy daemon. Quit Open Design and retry.`,
+        `Cannot install MCP while the existing ${existingOwner.stamp.mode} desktop runtime has no healthy daemon. Quit proto.dsgn and retry.`,
       );
     }
   }
@@ -550,8 +550,8 @@ const electronReadyAtMs = performance.now();
         if (splash != null && !splash.window.isDestroyed()) splash.window.destroy();
         splash = null;
         dialog.showErrorBox(
-          "Open Design",
-          "Open Design could not open its window. Quit Open Design from the Dock and open it again.",
+          "proto.dsgn",
+          "proto.dsgn could not open its window. Quit proto.dsgn from the Dock and open it again.",
         );
       },
       stopHeadless: async () => { await sidecars.close(); },

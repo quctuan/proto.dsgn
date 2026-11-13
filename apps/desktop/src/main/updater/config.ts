@@ -38,7 +38,7 @@ export const DESKTOP_UPDATE_ENV = Object.freeze({
   PLATFORM: "OD_UPDATE_PLATFORM",
 } as const);
 
-const DEFAULT_RELEASE_ORIGIN = "https://releases.open-design.ai";
+
 const BETA_POLL_INTERVAL_MS = 15 * 60 * 1000;
 const STABLE_POLL_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const DEFAULT_POLL_INITIAL_DELAY_MS = 5000;
@@ -115,7 +115,7 @@ export function isDesktopUpdateChannel(value: unknown): value is DesktopUpdateCh
 }
 
 function defaultMetadataUrl(channel: DesktopUpdateChannel): string {
-  return `${DEFAULT_RELEASE_ORIGIN}/${channel}/latest/metadata.json`;
+  return "";
 }
 
 export function normalizeDownloadRoot(value: string): string {
@@ -163,7 +163,8 @@ export function resolveDesktopUpdaterConfig(input: DesktopUpdaterConfigInput): D
   const env = input.env ?? process.env;
   const mode = normalizeMode(env[DESKTOP_UPDATE_ENV.MODE], input.mode ?? DESKTOP_UPDATE_MODES.PACKAGE_LAUNCHER);
   const defaultEnabled = input.source === SIDECAR_SOURCES.PACKAGED;
-  const enabled = isTruthyEnv(env[DESKTOP_UPDATE_ENV.ENABLED]) ?? defaultEnabled;
+  const enabled = Boolean(env[DESKTOP_UPDATE_ENV.METADATA_URL]?.trim())
+    && (isTruthyEnv(env[DESKTOP_UPDATE_ENV.ENABLED]) ?? defaultEnabled);
   const runtimeBase = resolve(input.runtimeBase == null ? process.cwd() : input.runtimeBase);
   const downloadRoot = normalizeDownloadRoot(
     env[DESKTOP_UPDATE_ENV.DOWNLOAD_ROOT] ??
