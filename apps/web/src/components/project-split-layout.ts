@@ -71,7 +71,7 @@ export function clampChatPanelWidth(
 
 export function defaultChatPanelWidthForSplit(splitWidth: number): number {
   if (!Number.isFinite(splitWidth) || splitWidth <= 0) return DEFAULT_CHAT_PANEL_WIDTH;
-  const equalHalf = (splitWidth - SPLIT_RESIZE_HANDLE_WIDTH) / 2;
+  const equalHalf = Math.min(360, (splitWidth - SPLIT_RESIZE_HANDLE_WIDTH) / 2);
   return clampChatPanelWidth(equalHalf, maxChatPanelWidthForSplit(splitWidth));
 }
 

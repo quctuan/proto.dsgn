@@ -17323,7 +17323,6 @@ function HtmlViewer({
           <div className="viewer-tabs viewer-mode-tabs" role="tablist" aria-label="View mode">
             {([
               ['preview', t('fileViewer.preview'), 'eye-line'],
-              ['source', t('fileViewer.source'), 'code-s-slash-line'],
             ] as const).map(([id, label, icon]) => (
               <button
                 key={id}
@@ -17332,8 +17331,8 @@ function HtmlViewer({
                 className={`viewer-tab ${mode === id ? 'active' : ''}`}
                 aria-label={label}
                 aria-selected={mode === id}
-                disabled={viewerOnly && id === 'source'}
-                title={viewerOnly && id === 'source' ? viewerOnlyDisabledTitle : label}
+                disabled={false}
+                title={label}
                 onClick={() => {
                   fireArtifactToolbarClick(id);
                   selectMode(id);

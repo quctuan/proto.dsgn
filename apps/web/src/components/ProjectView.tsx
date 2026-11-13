@@ -1,3 +1,4 @@
+import { PrototypeWorkspace } from './PrototypeWorkspace';
 import { openExternalUrl } from "../providers/registry";
 import { homeAutoSendIdentity, stableIdentityDigest, type HomeRequestConcurrencyRejection } from '../runtime/home-auto-send-identity';
 import { withLiveArtifactDeliveries } from '../runtime/live-artifact-delivery';
@@ -8984,6 +8985,9 @@ export function ProjectView({
       baseMessages?: ChatMessage[],
     ) => {
       if (projectMutationReadOnly) return false;
+      if (!designSystemProject && !prompt.includes('NEW unique revision folder under prototypes/')) {
+        prompt += '\n\nWorkspace design phase: create or edit static, editable HTML design screens on the Canvas. Preserve any existing prototypes/ revisions. Do not implement interactive prototype behavior until the user invokes Create prototype. Keep original design screens outside prototypes/.';
+      }
       if (!activeConversationId) return false;
       if (messagesConversationIdRef.current !== activeConversationId) return false;
       const clientRequestId = meta?.clientRequestId ?? randomUUID();
@@ -15136,7 +15140,28 @@ export function ProjectView({
             onBlur={handleChatResizeBlur}
           />
         ) : null}
-        <FileWorkspace
+        {!designSystemProject && !projectMutationReadOnly ? <PrototypeWorkspace
+          projectId={project.id}
+          projectName={currentProject.name}
+          files={projectFiles}
+          revision={committedFilesRefreshKey}
+          presence={projectCollab.enabled ? <PresenceBar members={projectCollab.present} selfMember={projectCollab.member} resolveMember={resolvePresenceMember} {...(projectCollab.member ? { selfMemberId: projectCollab.member.memberId } : {})} /> : null}
+          busy={currentConversationStreaming || currentConversationHasActiveRun}
+          readOnly={projectMutationReadOnly}
+          viewerProps={{
+            previewComments: visiblePreviewComments,
+            previewCommentsState: visiblePreviewCommentsState,
+            onRetryPreviewComments: refreshPreviewComments,
+            onSavePreviewComment: savePreviewComment,
+            onRemovePreviewComment: removePreviewComment,
+            onReorderPreviewComment: reorderPreviewComment,
+            onSendBoardCommentAttachments: handleSendBoardCommentAttachments,
+            shareRequest, downloadRequest,
+            projectName: currentProject.name,
+          }}
+          onCreatePrototype={(prompt) => handleSend(prompt, [], [])}
+          onRefresh={() => { void refreshFileWorkspace(); }}
+        /> : <FileWorkspace
           headerActions={projectCollab.enabled && projectCollab.isOwner && projectCollab.requestContentUpdate ? (
             <OwnedContentUpdate key={`${project.id}:${projectRunWorkspaceContext?.workspaceId}:${projectRunWorkspaceContext?.workspaceMemberId}`}
               update={projectCollab.ownedContentUpdate ?? null} request={projectCollab.requestContentUpdate} />
@@ -15273,7 +15298,7 @@ export function ProjectView({
           onAuthorizeAndRetry={handleSwitchToAmrAndRetry}
           onLaunchTerminalAuth={handleLaunchAntigravityOauth}
           conversationId={activeConversationId}
-        />
+        />}
       </div>
       {contextPluginDetails ? (
         <PluginDetailsModal

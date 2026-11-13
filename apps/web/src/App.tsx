@@ -84,7 +84,6 @@ import {
   removeWorkspaceProjectTabs,
   WorkspaceTabsBar,
 } from './components/WorkspaceTabsBar';
-import { WorkspaceTopRightAccountCluster } from './components/EntryNavRail';
 import { ProjectWorkspaceRecoveryTip } from './components/ProjectWorkspaceRecoveryTip';
 import {
   DesignSystemCreationFlow,
@@ -6233,45 +6232,6 @@ function AppInner() {
           onDuplicateProject={handleDuplicateProject}
           onDeleteProject={handleDeleteProject}
         />
-        {/* Avatar + credits keep their home-view spot (the top-right actions
-            host inside the tabs chrome) while a project tab is open, even
-            though EntryShell — the cluster's usual owner — is unmounted here.
-            Home and the other entry views mount theirs through EntryNavRail;
-            the routes are mutually exclusive, so exactly one is on screen. */}
-        {route.kind === 'project' ? (
-          <WorkspaceTopRightAccountCluster
-            amrProfile={amrProfileForConfig(config)}
-            workspaceQuotaStatus={amrLoginStatus}
-            onOpenSettings={openSettings}
-            onSignedOut={handleActiveCloudSignOut}
-            updaterSlot={
-              <UpdaterPopup
-                allowSilentUpdates={config.allowSilentUpdates}
-                silentUpdatePreferenceReady={daemonAppConfigReady}
-                onAllowSilentUpdatesChange={handleSilentUpdatePreferenceChange}
-              />
-            }
-            workspaceContextOverride={
-              activeProject?.workspaceId
-                ? activeProjectWorkspaceContext
-                : undefined
-            }
-            workspaceContextLoading={
-              activeProject?.workspaceId
-                ? projectRouteWorkspaceContext.loading
-                : undefined
-            }
-            amrLoggedIn={amrLoginStatus?.loggedIn ?? null}
-            amrAccountPlan={
-              amrLoginStatus?.account?.plan?.trim()
-              || amrLoginStatus?.user?.plan?.trim()
-              || null
-            }
-            amrAccountId={amrLoginStatus?.user?.id ?? amrLoginStatus?.credentialRevision ?? null}
-            metricsConsent={config.telemetry?.metrics === true}
-            installationId={config.installationId}
-          />
-        ) : null}
         {route.kind === 'project'
           && activeProjectWorkspaceContext
           && projectRouteWorkspaceContext.failure === 'unavailable' ? (

@@ -22,9 +22,9 @@ afterEach(() => {
 });
 
 describe('resolveProjectSplitLayout', () => {
-  it('takes the equal split when nothing was saved', () => {
+  it('keeps chat compact so the canvas owns the workspace', () => {
     const layout = resolveProjectSplitLayout(1280, { width: DEFAULT_CHAT_PANEL_WIDTH, customized: false });
-    expect(layout.chatPanelWidth).toBe(638);
+    expect(layout.chatPanelWidth).toBe(360);
     expect(layout.workspacePanelTrack).toBe('minmax(400px, 1fr)');
   });
 
