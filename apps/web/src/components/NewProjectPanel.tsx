@@ -306,7 +306,7 @@ export function NewProjectPanel({
   const [workingDirError, setWorkingDirError] = useState<
     { message: string; details?: string } | null
   >(null);
-  const [tab, setTab] = useState<CreateTab>(initialTab);
+  const [tab, setTab] = useState<CreateTab>('prototype');
   // P0 analytics — fire surface_view once per (panel mount, tab) pair so the
   // funnel sees both initial open and tab switches without double-counting on
   // unrelated re-renders. Ref keys on a tab string because the panel is a
@@ -803,7 +803,7 @@ export function NewProjectPanel({
         }
         if ('canceled' in result && result.canceled) return;
         setWorkingDirError({
-          message: `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update OpenDesign and try again.`,
+          message: `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update proto.dsgn and try again.`,
         });
         return;
       }
@@ -866,7 +866,7 @@ export function NewProjectPanel({
           <Icon name="chevron-left" size={16} strokeWidth={2} />
         </button>
         <div className="newproj-tabs" role="tablist" ref={tabsRef}>
-          {(Object.keys(TAB_LABEL_KEYS) as CreateTab[]).map((entry) => (
+          {(['prototype'] as CreateTab[]).map((entry) => (
             <button
               key={entry}
               role="tab"

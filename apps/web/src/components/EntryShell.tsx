@@ -1,4 +1,3 @@
-import { useRegistrationInvite } from './useRegistrationInvite';
 // EntryShell — the centered-hero entry layout.
 //
 // This component owns the entire JSX render and local UI state for
@@ -135,9 +134,7 @@ import {
   type AmrBalanceGateScope,
 } from '../runtime/amr-balance-gate';
 import { cachedHomeAmrFundingBlock, checkAmrFundingFeedback, confirmHomeAmrFundingAvailable, invalidateAmrFundingFeedback, noteHomeAmrFundingBlockPresented, readSendTimeAmrFundingEvidence, recentHomeAmrFundingInsufficiency, retireHomeAmrFundingBlock, takeHomeAmrFundingFastBlock } from '../runtime/amr-funding-feedback';
-import { ReferralNotice } from './ReferralNotice';
 import { HomeView, seedHomeComposerPrompt } from './HomeView';
-import { HomeInviteSurface, HomeInviteTrigger } from './HomeInviteSurface';
 import { entryStrategyRoutingFields } from './entry-strategy-routing';
 import { EntryBlankState } from './EntryBlankState';
 import { RecentProjectsStrip, type ProjectCollectionScope } from './RecentProjectsStrip';
@@ -712,11 +709,6 @@ export function EntryShell({
   // view from the route rather than keeping it in component state.
   const route = useRoute();
   const view: EntryViewKind = route.kind === 'home' ? route.view : 'home';
-  const [inviteSignInRequest, setInviteSignInRequest] = useState<'start' | 'waiting' | null>(null);
-  useEffect(() => {
-    // Returning to Local/BYOK without signing in abandons this invitation.
-    if (view !== 'onboarding' && amrLoggedIn === false && inviteSignInRequest === 'waiting') setInviteSignInRequest(null);
-  }, [view, amrLoggedIn, inviteSignInRequest]);
   // The one shared workspace context. Any non-null context is a real workspace
   // (personal or team); workspace surfaces gate on B's permission bits, not on
   // workspaceType.
@@ -2038,60 +2030,19 @@ export function EntryShell({
     const timer = window.setTimeout(() => setRegistrationEntryFade(false), 200);
     return () => window.clearTimeout(timer);
   }, [registrationEntryFade]);
-  const registrationInvite = useRegistrationInvite({
-    status: amrRegistrationStatus, accountId: amrAccountId, configuredProfile: amrProfile?.trim() || config.agentCliEnv?.amr?.VELA_PROFILE?.trim() || amrRegistrationStatus?.profile || 'prod', context: railWorkspaceContext,
-    identityReady: !workspaceContextState.loading && !workspaceContextState.identityChangePending && !workspaceContextState.failure,
-    identityUnavailable: Boolean(workspaceContextState.failure && !workspaceContextState.loading && !workspaceContextState.identityChangePending),
-    onRetryIdentity: () => notifyWorkspaceContextRefresh(),
-    allowHost: view !== 'onboarding' || (config.mode === 'daemon' && config.agentId === 'amr') || unconfiguredFirstRunCloud,
-    onExit: (count, context, completion) => {
-      if (!amrAccountId) return;
-      if (unconfiguredFirstRunCloud) {
-        onModeChange('daemon');
-        onAgentChange('amr');
-      }
-      if (completion === 'skipped' && count > 0) setRegistrationSkipNotice({ count, accountId: amrAccountId, workspaceId: context.workspaceId, workspaceMemberId: context.workspaceMemberId, credentialRevision: amrRegistrationStatus?.credentialRevision, profile: amrRegistrationStatus?.profile });
-      setRegistrationEntryFade(true);
-      finishOnboarding();
-    },
-  });
-  const registrationInviteActive = registrationInvite !== null;
-  useEffect(() => {
-    // A new account's mandatory invitation step already fulfils this intent.
-    if (registrationInviteActive) setInviteSignInRequest(null);
-  }, [registrationInviteActive]);
-  useLayoutEffect(() => {
-    onRegistrationInviteActiveChange?.(registrationInviteActive);
-    return () => onRegistrationInviteActiveChange?.(false);
-  }, [registrationInviteActive, onRegistrationInviteActiveChange]);
-  useEffect(() => {
-    if (!registrationSkipNotice || registrationInvite || view !== 'home') return;
-    if (workspaceContextState.loading || workspaceContextState.identityChangePending) return;
-    const completed = registrationSkipNotice;
-    setRegistrationSkipNotice(null);
-    if (completed.accountId !== amrAccountId || amrRegistrationStatus?.sessionState !== 'authenticated'
-      || completed.credentialRevision !== amrRegistrationStatus.credentialRevision || completed.profile !== amrRegistrationStatus.profile
-      || completed.workspaceId !== railWorkspaceContext?.workspaceId || completed.workspaceMemberId !== railWorkspaceContext?.workspaceMemberId) return;
-    window.dispatchEvent(new CustomEvent('od:workspace-invites-sent', { detail: {
-      workspaceId: completed.workspaceId, workspaceMemberId: completed.workspaceMemberId, count: completed.count, totalCount: completed.count,
-    } }));
-  }, [registrationSkipNotice, registrationInvite, view, workspaceContextState.loading, workspaceContextState.identityChangePending, amrAccountId, amrRegistrationStatus, railWorkspaceContext]);
   useWorkspaceContentView({
     context: railWorkspaceContext,
     pageName: entryViewToTracking(view),
-    active: route.kind === 'home' && view !== 'onboarding' && !registrationInviteActive,
+    active: route.kind === 'home' && view !== 'onboarding',
     ready: !workspaceContextState.loading && !workspaceContextState.identityChangePending
       && !workspaceContextState.failure && amrLoggedIn === true,
   });
-  if (registrationInvite) return registrationInvite;
 
   if (view === 'onboarding') {
     return (
       <div className="entry-shell entry-shell--no-header entry-shell--onboarding">
         <main className="entry-onboarding-modal" aria-label={t('settings.welcomeTitle')}>
           <OnboardingView
-            autoCloudSignInRequested={inviteSignInRequest === 'start'}
-            onAutoCloudSignInConsumed={() => setInviteSignInRequest('waiting')}
             config={config}
             agents={agents}
             agentsLoading={agentsLoading}
@@ -2192,37 +2143,14 @@ export function EntryShell({
           }}
           onOpenSearch={() => setProjectSearchOpen(true)}
           open={railOpen}
-          inviteSlot={<HomeInviteTrigger signedOut={amrLoggedIn === false} context={railWorkspaceContext} />}
-          topRightSlot={<>
-            {topRightCampaignAudience || (homeCampaignHostsVisible && amrLoggedIn === true) ? (
-            <>
-              {topRightCampaignAudience ? (
-                <WorkbenchCampaignBadge
-                  audience={topRightCampaignAudience}
-                  page="home"
-                  metricsConsent={config.telemetry?.metrics === true}
-                  installationId={config.installationId}
-                  loggedIn={amrLoggedIn}
-                />
-              ) : null}
-              {homeCampaignHostsVisible
-                && canRenderProductionCampaignBadge(amrLoggedIn === true, amrAccountId) ? <ProductionCampaignBadge authenticated sessionSubject={amrAccountId} /> : null}
-              {/* The requirements-specific hover entry is its own authorized
-                  touchpoint, beside—not renamed from—the account badge. */}
-              {homeCampaignHostsVisible ? (
-                <ProductionCampaignHover
-                  authenticated={amrLoggedIn === true}
-                  sessionSubject={amrAccountId}
-                />
-              ) : null}
-            </>
-          ) : null}</>}
+
+
           context={railWorkspaceContext}
           billing={workspaceBilling}
           billingResponse={workspaceBillingResponse}
           balanceUsd={workspaceBalanceUsd}
           onOpenSettings={onOpenSettings}
-          onInvite={() => changeView('members')}
+
           onSignInCloud={() => navigate({ kind: 'home', view: 'onboarding' })}
           onSignedOut={onSignedOut}
           updaterSlot={updaterSlot}
@@ -2282,8 +2210,8 @@ export function EntryShell({
               <HomeView
                 {...homeViewProps}
                 isActive={view === 'home'}
-                referralNotice={<ReferralNotice accountId={amrLoggedIn === true ? amrAccountId : null} profile={amrRegistrationStatus?.profile?.trim() || amrProfile} consoleOrigin={amrRegistrationStatus?.consoleOrigin} active={view === 'home'} context={homeFundingContext} billing={workspaceBillingResponse} />}
-                inviteSurface={<HomeInviteSurface signedOut={amrLoggedIn === false} identityReady={!workspaceContextState.loading && !workspaceContextState.identityChangePending && !workspaceContextState.failure} accountId={amrLoggedIn === true ? amrAccountId : null} context={railWorkspaceContext} active={view === 'home'} onSignInRequested={() => { setInviteSignInRequest('start'); navigate({ kind: 'home', view: 'onboarding' }); }} openAfterSignIn={inviteSignInRequest === 'waiting'} onSignInInviteConsumed={() => setInviteSignInRequest(null)} />}
+
+
                 /* Home is the one composer in the shell and consumes the page
                    handoff. The community view used to dock a second HomeView
                    (`variant="dock"`) with a handoff of its own; that mount
@@ -4065,24 +3993,10 @@ function OnboardingView({
       >
         <div className="onboarding-cloud__pane">
           <div className="onboarding-cloud__center">
-            <img className={onboardingWelcomeStyles.logo} src="/auth-symbol.svg" alt="OpenDesign" />
+
             <h1 className="onboarding-cloud__title">{t('settings.onboardingCloudTitle')}</h1>
             <p className="onboarding-cloud__body">{t('settings.onboardingCloudBody')}</p>
             <div className={onboardingWelcomeStyles.signInAction}>
-              {!amrSignedIn && !amrStatusResolving && !cloudBusy ? (
-                <span className={onboardingWelcomeStyles.creditCorner}>
-                  <span
-                    className={`${onboardingWelcomeStyles.credits} od-tooltip`}
-                    data-tooltip={t('settings.onboardingFreeCreditsHint')}
-                    aria-label={t('settings.onboardingFreeCreditsHint')}
-                    tabIndex={0}
-                  >
-                    <span className={onboardingWelcomeStyles.creditLabel}>
-                      {t('settings.onboardingFreeCredits')}
-                    </span>
-                  </span>
-                </span>
-              ) : null}
               <button
                 type="button"
                 className="onboarding-cloud__primary"
@@ -4211,7 +4125,7 @@ function OnboardingView({
           <footer className="onboarding-cloud__footer">
             <LanguageMenu placement="up" align="start" />
             <span>
-              © {new Date().getFullYear()} OpenDesign · {t('settings.onboardingCloudRights')}
+              © {new Date().getFullYear()} proto.dsgn · {t('settings.onboardingCloudRights')}
             </span>
           </footer>
         </div>

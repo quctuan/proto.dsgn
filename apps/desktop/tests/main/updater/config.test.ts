@@ -12,6 +12,16 @@ function makeRoot(): string {
 }
 
 describe("desktop updater config", () => {
+  it("only enables updates with an explicit fork feed", () => {
+    const config = resolveDesktopUpdaterConfig({
+      currentVersion: "1.2.3",
+      env: { [DESKTOP_UPDATE_ENV.METADATA_URL]: "https://updates.example.org/metadata.json" },
+      source: SIDECAR_SOURCES.PACKAGED,
+    });
+    expect(config.enabled).toBe(true);
+    expect(config.metadataUrl).toBe("https://updates.example.org/metadata.json");
+  });
+
   it("defaults counted beta internal builds to the beta update channel", () => {
     const root = makeRoot();
     try {
@@ -25,7 +35,8 @@ describe("desktop updater config", () => {
       });
 
       expect(config.channel).toBe(DESKTOP_UPDATE_CHANNELS.BETA);
-      expect(config.metadataUrl).toContain("/beta/latest/metadata.json");
+      expect(config.metadataUrl).toBe("");
+      expect(config.enabled).toBe(false);
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
@@ -63,7 +74,8 @@ describe("desktop updater config", () => {
       });
 
       expect(config.channel).toBe(DESKTOP_UPDATE_CHANNELS.PRERELEASE);
-      expect(config.metadataUrl).toContain("/prerelease/latest/metadata.json");
+      expect(config.metadataUrl).toBe("");
+      expect(config.enabled).toBe(false);
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
@@ -82,7 +94,8 @@ describe("desktop updater config", () => {
       });
 
       expect(config.channel).toBe("preview");
-      expect(config.metadataUrl).toContain("/preview/latest/metadata.json");
+      expect(config.metadataUrl).toBe("");
+      expect(config.enabled).toBe(false);
     } finally {
       rmSync(root, { force: true, recursive: true });
     }

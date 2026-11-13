@@ -904,7 +904,7 @@ export function DesignSystemsTab({
       : []),
     // #5517 ships three scopes only. The enterprise placeholder tab advertised a
     // surface that does not exist yet, so it leaves the row.
-    { value: 'official' as const, label: t('dsManager.officialPresets'), count: queryScoped.length },
+
   ];
 
   const showPresetFilters = designSystemCollection === 'official';

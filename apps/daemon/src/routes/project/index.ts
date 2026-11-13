@@ -1,3 +1,4 @@
+import { supportsPrototypeCreation } from '@open-design/contracts';
 import { withCommentFileDeletion, type CommentFileDeletion } from '../../collab/comment-file-deletion.js';
 import { injectMotionSourcePlayer, isMotionVideoComposition, markMotionHostedPreview, MOTION_PREVIEW_OUTPUT_HEADER } from '@open-design/contracts/runtime/motion-source-player';
 import { createHash, randomUUID } from 'node:crypto';
@@ -3938,6 +3939,10 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       // One request-wide deadline covers every asynchronous read before the
       // transaction. Resetting a full timeout for each stage would still let a
       // sequence of merely slow reads outlive the Web's optimistic route.
+      if (!supportsPrototypeCreation(req.body?.metadata)
+        || (req.body?.automaticStrategyTaskProfile && req.body.automaticStrategyTaskProfile !== 'prototype')) {
+        return sendApiError(res, 400, 'BAD_REQUEST', 'proto.dsgn only creates prototypes.');
+      }
       const projectCreatePreparationDeadline =
         Date.now() + projectCreatePreparationTimeoutMs;
       // A complete Workspace attribution must still name a currently active
@@ -4160,7 +4165,7 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
               && key !== 'exampleBinding'
             )),
           )
-        : null;
+        : { kind: 'prototype' };
       const baseProjectMetadata =
         clientMetadata
           ? {
@@ -4212,14 +4217,7 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       const initialSessionMode = normalizeChatSessionMode(
         req.body?.conversationMode ?? req.body?.sessionMode,
       );
-      const requestedAutomaticStrategyTaskProfile =
-        req.body?.automaticStrategyTaskProfile === 'prototype'
-        || req.body?.automaticStrategyTaskProfile === 'ppt'
-        || req.body?.automaticStrategyTaskProfile === 'marketing'
-        || req.body?.automaticStrategyTaskProfile === 'hyperframes'
-        || req.body?.automaticStrategyTaskProfile === 'motion-design'
-          ? req.body.automaticStrategyTaskProfile
-          : null;
+      const requestedAutomaticStrategyTaskProfile = 'prototype' as const;
       if (
         req.body?.automaticStrategyTaskProfile !== undefined
         && !requestedAutomaticStrategyTaskProfile
@@ -4498,7 +4496,7 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
             skillId: normalizedSkillId,
             designSystemId: normalizedDesignSystemId,
             pendingPrompt: pendingPrompt || null,
-            metadata: projectMetadata,
+            metadata: { ...projectMetadata, kind: 'prototype' },
             customInstructions:
               typeof customInstructions === 'string'
                 ? customInstructions

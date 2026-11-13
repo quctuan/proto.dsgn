@@ -1,3 +1,4 @@
+import { supportsPrototypeCreation } from '@open-design/contracts';
 import type { QueuedSubmissionRequest, UserSubmissionReceipt } from "@open-design/contracts";
 // Project / conversation / message / tab persistence — backed by the
 // daemon's SQLite store. All writes round-trip through HTTP so projects
@@ -780,6 +781,10 @@ export async function createProject(
   },
   retryOptions: CreateProjectRetryOptions = {},
 ): Promise<{ project: Project; conversationId: string; appliedPluginSnapshotId?: string }> {
+  if (!supportsPrototypeCreation(input.metadata)) {
+    throw new Error('proto.dsgn only creates prototypes.');
+  }
+  input = { ...input, metadata: { ...input.metadata, kind: 'prototype' }, automaticStrategyTaskProfile: 'prototype' };
   const maxRetries = retryOptions.maxRetries ?? 3;
   const sleep = retryOptions.sleep ?? defaultRetrySleep;
   const backoff = new BackoffController(
@@ -830,7 +835,7 @@ export async function createProject(
       }
       if (await isDaemonProxyConnectionFailure(resp)) {
         throw new ProjectCreateError(
-          'Could not reach the local OpenDesign service',
+          'Could not reach the local proto.dsgn service',
           null,
           null,
           true,

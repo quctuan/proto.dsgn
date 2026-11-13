@@ -275,7 +275,7 @@ export async function runPackagedHeadless(
   await client.start();
   const webUrl = (await client.status<{ url: string }>(APP_KEYS.DESKTOP)).url;
 
-  process.stdout.write(`\n Open Design is running\n\n`);
+  process.stdout.write(`\n proto.dsgn is running\n\n`);
   process.stdout.write(` ➜ ${colorize(webUrl)}\n\n`);
   process.stdout.write(` Press Ctrl+C to stop\n\n`);
 
@@ -293,5 +293,5 @@ async function installCodexMcp(daemonUrl: string | null): Promise<void> {
       `Codex MCP install failed (${response.status}): ${detail}`,
     );
   }
-  process.stdout.write(" Open Design MCP installed for Codex\n");
+  process.stdout.write(" proto.dsgn MCP installed for Codex\n");
 }

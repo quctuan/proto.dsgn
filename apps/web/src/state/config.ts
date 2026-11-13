@@ -112,7 +112,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   // existed yet — observed live on the prerelease.10 QA run, which left
   // zero `page_view pn=onboarding` rows on PostHog despite the user
   // completing the flow.
-  telemetry: { metrics: true, content: true },
+  telemetry: { metrics: false, content: false },
 };
 
 /** Well-known providers with pre-filled base URLs. */

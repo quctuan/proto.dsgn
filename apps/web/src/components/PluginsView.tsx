@@ -196,22 +196,22 @@ const PLUGIN_SHARE_DETAILS: Record<PluginShareAction, {
     eyebrow: 'GitHub repository',
     fallbackTitle: 'Publish Plugin to GitHub',
     fallbackDescription:
-      'Creates a public GitHub repository for this local OpenDesign plugin.',
+      'Creates a public GitHub repository for this local proto.dsgn plugin.',
     confirmLabel: 'Start publishing',
     steps: [
-      'Create a new OpenDesign project for the publish workflow.',
+      'Create a new proto.dsgn project for the publish workflow.',
       'Copy this plugin into that project as isolated source context.',
       'Run the official publish action plugin against the local daemon.',
     ],
   },
   'contribute-open-design': {
-    eyebrow: 'OpenDesign pull request',
-    fallbackTitle: 'Contribute Plugin to OpenDesign',
+    eyebrow: 'proto.dsgn pull request',
+    fallbackTitle: 'Contribute Plugin to proto.dsgn',
     fallbackDescription:
-      'Opens a pull request that adds this plugin to the OpenDesign community catalog.',
+      'Opens a pull request that adds this plugin to the proto.dsgn community catalog.',
     confirmLabel: 'Start contribution',
     steps: [
-      'Create a new OpenDesign project for the contribution workflow.',
+      'Create a new proto.dsgn project for the contribution workflow.',
       'Copy this plugin into that project as isolated source context.',
       'Run the official contribution action plugin against the local daemon.',
     ],
@@ -600,7 +600,7 @@ export function PluginsView({
       {notice ? <Notice outcome={notice} /> : null}
 
       <div className="plugins-view__gallery">
-        {visibleLoading ? <div className="plugins-view__empty">{t('pluginsView.loading')}</div> : null}
+        {visibleLoading ? <div className="plugins-view__empty">{t('common.loading')}</div> : null}
 
         {!visibleLoading && activeTab === 'installed' ? (
           <PluginsHomeSection
@@ -1068,7 +1068,7 @@ export function ExtensionsMarketplace({
     trackPageView(analytics.track, { page_name: 'plugins' });
   }, [analytics.track, isActive]);
 
-  const [mode, setMode] = useState<MarketMode>('plugins');
+  const [mode, setMode] = useState<MarketMode>('skills');
   // #5517 lands on the official catalog first — a new workspace's personal
   // scope is empty, and the official list is the marketplace's front door.
   const [scope, setScope] = useState<MarketScope>('official');
@@ -1186,7 +1186,7 @@ export function ExtensionsMarketplace({
   //   Skill  · 上传本地文件夹 → importSkill(<SKILL.md body>)  (reads the folder)
   //   Skill  · 从链接导入   → installSkill(source)
   const [createOpen, setCreateOpen] = useState(false);
-  const [createKind, setCreateKind] = useState<'plugin' | 'skill'>('plugin');
+  const [createKind, setCreateKind] = useState<'plugin' | 'skill'>('skill');
   const [createUrl, setCreateUrl] = useState('');
   const [createFolderFiles, setCreateFolderFiles] = useState<File[]>([]);
   const [createBusy, setCreateBusy] = useState<'import' | 'upload' | null>(null);
@@ -1374,9 +1374,9 @@ export function ExtensionsMarketplace({
     const previousPluginCache = readCachedVisiblePlugins({ workspaceContext: read.context });
     setLoading(true);
     const [rows, allRows, catalogs, skillRows] = await Promise.all([
-      listPlugins({ workspaceContext: read.context }),
-      listPlugins({ includeHidden: true, workspaceContext: read.context }),
-      listPluginMarketplaces(),
+      Promise.resolve<InstalledPluginRecord[]>([]),
+      Promise.resolve<InstalledPluginRecord[]>([]),
+      Promise.resolve<PluginMarketplace[]>([]),
       // Carry the acting workspace so the daemon's `GET /api/skills` applies
       // its workspace-scoped filter — mirrors `listPlugins`'s
       // `workspaceContext` in `PluginsView` above (routes/plugins/index.ts's
@@ -1393,8 +1393,7 @@ export function ExtensionsMarketplace({
       || !read.isStillCurrent(emContextRef.current)
     ) return;
     const pluginCache = readCachedVisiblePlugins({ workspaceContext: read.context });
-    setNavigationCatalogVerified(pluginCache !== null && pluginCache !== previousPluginCache
-      && pluginCache.every(plugin => allRows.includes(plugin)));
+    setNavigationCatalogVerified(true);
     setPlugins(rows);
     setAllInstalledPlugins(allRows);
     setMarketplaces(catalogs);
@@ -1533,7 +1532,6 @@ export function ExtensionsMarketplace({
       }
     };
     const loaded = await Promise.all([
-      loadShared('plugins', setSharedPluginIds, setSharedPluginMeta),
       loadShared('skills', setSharedSkillIds, setSharedSkillMeta),
     ]);
     if (!readIsStillCurrent()) return;
@@ -2065,7 +2063,7 @@ export function ExtensionsMarketplace({
         skill={selectedSkill}
         author={
           scope === 'official'
-            ? 'OpenDesign'
+            ? 'proto.dsgn'
             : scope === 'team'
               ? 'Nexu Team'
               : t('chat.you')
@@ -2110,33 +2108,7 @@ export function ExtensionsMarketplace({
         ) : null}
       </header>
 
-      <div className="plugin-marketplace__toolbar">
-        <div className="plugin-marketplace__switch" aria-label={t('pluginsView.marketplaceModeAria')}>
-          <button
-            type="button"
-            className={mode === 'plugins' ? 'is-active' : ''}
-            onClick={() => {
-              trackExtension('filter', { kind: 'expert_plugin' });
-              setMode('plugins');
-              setMenuId(null);
-              setConfirmUninstallId(null);
-            }}
-          >
-            {t('pluginsView.kind.plugins')}
-          </button>
-          <button
-            type="button"
-            className={mode === 'skills' ? 'is-active' : ''}
-            onClick={() => {
-              trackExtension('filter', { kind: 'skill' });
-              setMode('skills');
-              setMenuId(null);
-            }}
-          >
-            {t('pluginsView.kind.skills')}
-          </button>
-        </div>
-      </div>
+
 
       {/* #5517 drops the mode-note lede line under the tabs. */}
 
@@ -2198,7 +2170,7 @@ export function ExtensionsMarketplace({
         {catalogLoading ? (
           <div className="plugin-marketplace__empty">
             <Icon name="spinner" size={18} />
-            <strong>{t('pluginsView.loading')}</strong>
+            <strong>{t('common.loading')}</strong>
           </div>
         ) : visibleCards.length === 0 ? (
           <MarketEmptyState
@@ -2510,22 +2482,7 @@ export function ExtensionsMarketplace({
                 <Icon name="close" size={15} />
               </button>
             </header>
-            <div className="plugin-marketplace__create-tabs" aria-label={t('pluginsView.createTypeAria')}>
-              <button
-                type="button"
-                className={createKind === 'plugin' ? 'is-active' : ''}
-                onClick={() => switchCreateKind('plugin')}
-              >
-                {t('pluginsView.createKindPlugin')}
-              </button>
-              <button
-                type="button"
-                className={createKind === 'skill' ? 'is-active' : ''}
-                onClick={() => switchCreateKind('skill')}
-              >
-                {t('pluginsView.createKindSkill')}
-              </button>
-            </div>
+
             <div className="plugin-marketplace__create-options">
               {/* Authoring by describing what you want is the flow the home
                   composer is built around, and it had no reachable entry: the
@@ -3318,7 +3275,7 @@ function AvailablePluginDetailsModal({
                 </h3>
               </div>
               <p className="plugin-details-modal__section-hint">
-                This official catalog entry is bundled with OpenDesign and is ready to use.
+                This official catalog entry is bundled with proto.dsgn and is ready to use.
               </p>
             </section>
           ) : (

@@ -953,7 +953,7 @@ function createPendingHtml(): string {
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>OpenDesign</title>
+    <title>proto.dsgn</title>
     <style>
       html,
       body {
@@ -1084,7 +1084,7 @@ interface RendererCrashScreenContext {
   exitCode: number | null;
 }
 
-const CRASH_REPORT_ISSUES_URL = "https://github.com/nexu-io/open-design/issues/new";
+const CRASH_REPORT_ISSUES_URL = "https://github.com/quctuan/proto.dsgn/issues/new";
 const SUPPORT_EMAIL = "support@open-design.ai";
 // Every address the app is allowed to hand to the OS mail client. Keep this in
 // sync with the renderer's own contact affordances (`CONTACT_EMAIL_URL` in
@@ -1157,7 +1157,7 @@ function buildCrashReportUrl(ctx: RendererCrashScreenContext): string {
   const title = `Desktop app keeps crashing (renderer ${ctx.reason})`;
   const body = [
     "**What happened**",
-    "The OpenDesign desktop window crashed several times in a row and showed the recovery screen.",
+    "The proto.dsgn desktop window crashed several times in a row and showed the recovery screen.",
     "",
     "**What I was doing when it started** (please add any detail):",
     "",
@@ -1176,9 +1176,9 @@ function buildCrashReportUrl(ctx: RendererCrashScreenContext): string {
 // Prefilled mailto for the "Email us" action — same auto-filled diagnostics as
 // the issue, for users who'd rather email than open a GitHub account.
 function buildCrashMailtoUrl(ctx: RendererCrashScreenContext): string {
-  const subject = `OpenDesign keeps crashing (renderer ${ctx.reason})`;
+  const subject = `proto.dsgn keeps crashing (renderer ${ctx.reason})`;
   const body = [
-    "The OpenDesign desktop app crashed several times in a row on my device.",
+    "The proto.dsgn desktop app crashed several times in a row on my device.",
     "",
     "(If possible, attach the diagnostics file you saved with the “Save logs…” button.)",
     "",
@@ -1196,7 +1196,7 @@ function createRendererCrashHtml(ctx: RendererCrashScreenContext): string {
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>OpenDesign</title>
+    <title>proto.dsgn</title>
     <style>
       /* Palette mirrors the app's neutral design tokens (apps/web tokens.css):
          warm off-white + near-black, no accent color — matching the black/white
@@ -1292,7 +1292,7 @@ function createRendererCrashHtml(ctx: RendererCrashScreenContext): string {
   </head>
   <body>
     <div class="panel">
-      <p class="title">OpenDesign keeps closing on this device</p>
+      <p class="title">proto.dsgn keeps closing on this device</p>
       <p class="body">The app window crashed several times in a row, so it has paused to avoid getting stuck reloading.</p>
       <p class="body">It will try to recover on its own in a few minutes.</p>
       <div class="actions">
@@ -1302,7 +1302,7 @@ function createRendererCrashHtml(ctx: RendererCrashScreenContext): string {
       <p class="hint" id="diag-note">Saved logs include a crash memory snapshot so we can find the cause. Nothing is sent unless you choose to share it.</p>
       <p class="status" id="status" aria-live="polite"></p>
       <p class="email" id="email-line">Prefer email? <a href="#" id="email">Contact ${SUPPORT_EMAIL}</a></p>
-      <p class="hint">If this keeps happening, quitting and reinstalling OpenDesign usually resolves it.</p>
+      <p class="hint">If this keeps happening, quitting and reinstalling proto.dsgn usually resolves it.</p>
     </div>
     <script>
       (function () {
@@ -1390,7 +1390,7 @@ const SPLASH_STAGE_SEQUENCE: readonly SplashBootStage[] = [
 ];
 
 const SPLASH_STAGE_LABELS: Record<SplashBootStage, string> = {
-  starting: "Starting OpenDesign",
+  starting: "Starting proto.dsgn",
   engine: "Starting the local engine",
   engineReady: "Local engine ready",
   interface: "Preparing the interface",
@@ -1532,7 +1532,7 @@ export function createSplashWindow(): SplashWindowHandle {
     height: 900,
     resizable: false,
     show: true,
-    title: "OpenDesign",
+    title: "proto.dsgn",
     width: 1280,
     webPreferences: {
       contextIsolation: true,
@@ -2249,7 +2249,7 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
 
   const consoleEntries: DesktopConsoleEntry[] = [];
   const petWindow = createDesktopPetWindow(preloadPath, options.osLocale);
-  const windowTitle = options.windowTitle ?? "OpenDesign";
+  const windowTitle = options.windowTitle ?? "proto.dsgn";
   const window = new BrowserWindow({
     height: 900,
     icon: resolveDesktopIconPath(),
@@ -2495,7 +2495,7 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
   const unsubscribeUpdater = options.updater?.subscribe(() => sendUpdaterStatus()) ?? (() => undefined);
   const requireMainWindowSender = (event: Electron.IpcMainInvokeEvent): void => {
     if (event.sender !== window.webContents) {
-      throw new Error("host IPC is only available to the main OpenDesign window");
+      throw new Error("host IPC is only available to the main proto.dsgn window");
     }
   };
   const discoverUpdateDaemonBaseUrl = async (): Promise<string> => {

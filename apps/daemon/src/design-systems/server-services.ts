@@ -362,12 +362,7 @@ export function createDesignSystemServerServices({
     workspaceMemberId?: string | null;
     exactTeam?: boolean;
   } = {}) {
-    const builtIn = (await designSystems.listDesignSystems(paths.DESIGN_SYSTEMS_DIR)).map((s) => ({
-      ...s,
-      source: 'built-in',
-      isEditable: false,
-      status: 'published',
-    }));
+    const builtIn: DesignSystemSummary[] = [];
     let installed: DesignSystemSummary[] = [];
     try {
       installed = await designSystems.listDesignSystems(paths.USER_DESIGN_SYSTEMS_DIR, {

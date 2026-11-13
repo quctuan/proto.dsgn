@@ -261,9 +261,9 @@ interface PendingPluginUseHandoff {
 }
 
 const AUTHORING_DEFAULT_SCENARIO_INPUTS = {
-  artifactKind: 'OpenDesign plugin',
-  audience: 'OpenDesign plugin authors',
-  topic: 'packaging a reusable workflow as an OpenDesign plugin',
+  artifactKind: 'proto.dsgn plugin',
+  audience: 'proto.dsgn plugin authors',
+  topic: 'packaging a reusable workflow as an proto.dsgn plugin',
 };
 
 
@@ -446,6 +446,8 @@ function readHomeComposerChipDraft(): HomeComposerChipDraft | null {
     const parsed = JSON.parse(raw) as Partial<HomeComposerChipDraft> | null;
     if (!parsed || typeof parsed.pluginId !== 'string' || !parsed.pluginId) return null;
     const parsedChipId = typeof parsed.chipId === 'string' ? parsed.chipId : null;
+    if (parsedChipId && parsedChipId !== 'prototype' && !legacyPrototypeSceneForChipId(parsedChipId)) return null;
+    if (parsed.projectKind && parsed.projectKind !== 'prototype') return null;
     // Drafts written before the creation hierarchy moved Mobile app and
     // Wireframe under Prototype persist their retired top-level chip ids, and
     // they outlive the release that removed those chips. Fold them onto the
@@ -640,7 +642,7 @@ export function HomeView({
   // required fields must not block the free-form brief that the route owns.
   const activeAutomaticStrategyTaskProfile = sessionMode === 'design'
     && !pinsPluginOverAutomaticRoute(active, active?.chipId ?? null)
-    ? automaticStrategyTaskProfileForRouteId(active?.chipId ?? null)
+    ? automaticStrategyTaskProfileForRouteId('prototype')
     : null;
   const [activeSkill, setActiveSkill] = useState<SkillSummary | null>(null);
   const [activeSkillCatalogScope, setActiveSkillCatalogScope] =
@@ -2191,7 +2193,7 @@ export function HomeView({
       // auth gate and surface as a confusing late create-time failure.
       // Surface the host error instead and keep the existing working dir.
       setError(
-        `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update OpenDesign and try again.`,
+        `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update proto.dsgn and try again.`,
       );
       return null;
     }
@@ -2216,7 +2218,7 @@ export function HomeView({
       }
       if ('canceled' in result && result.canceled) return null;
       setError(
-        `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update OpenDesign and try again.`,
+        `Couldn't open the folder picker (${'reason' in result ? result.reason : 'host unavailable'}). Please update proto.dsgn and try again.`,
       );
       return null;
     }
@@ -3484,15 +3486,8 @@ export function HomeView({
   );
 }
 
-function projectKindForSkill(skill: SkillSummary | null): ProjectKind | null {
-  if (!skill) return null;
-  if (skill.mode === 'deck') return 'deck';
-  if (skill.mode === 'prototype') return 'prototype';
-  if (skill.mode === 'template') return 'template';
-  if (skill.mode === 'image' || skill.surface === 'image') return 'image';
-  if (skill.mode === 'video' || skill.surface === 'video') return 'video';
-  if (skill.mode === 'audio' || skill.surface === 'audio') return 'audio';
-  return 'other';
+function projectKindForSkill(_skill: SkillSummary | null): ProjectKind {
+  return 'prototype';
 }
 
 function defaultPluginIdForChip(chipId: string | null): string | null {

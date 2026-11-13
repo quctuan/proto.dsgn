@@ -76,9 +76,7 @@ afterEach(() => {
 
 /** Switches the catalog from 专家套件 to 技能; the landing scope stays official. */
 async function showOfficialSkills(container: HTMLElement) {
-  const modeButtons = container.querySelectorAll('.plugin-marketplace__switch button');
-  const skillsTab = modeButtons[modeButtons.length - 1] as HTMLElement;
-  skillsTab.click();
+  expect(container.querySelector('.plugin-marketplace__switch')).toBeNull();
   await waitFor(() => {
     expect(container.querySelector('.plugin-marketplace__item--skill')).toBeTruthy();
   });
