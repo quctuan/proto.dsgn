@@ -57,6 +57,7 @@ export function currentUserDirectoryEntry(
   if (!context || !memberId) return null;
   return {
     memberId,
+    ...(context.avatarUrl ? {avatarUrl:context.avatarUrl} : {}),
     // Same fallback the daemon uses when it registers an identity into the
     // directory (`collab-cloud-service.ts`): an unnamed identity reads as its
     // id rather than as a blank card.

@@ -3228,3 +3228,50 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 .comment-popover-close:hover { background:#eee; color:#222; }
 .comment-reply-count { color:#0099ff; font-size:12px; }
 .comment-saved-marker[data-active=true]:has(.comment-saved-pin:hover) .comment-pin-preview { display:none; }
+
+/* Figma-style review surfaces: neutral chrome, clear states and full metadata. */
+.comment-popover-composer .comment-popover-titlebar { display:flex; align-items:center; justify-content:space-between; padding:0 0 12px; margin:0; border-bottom:1px solid #eee; }
+.comment-popover-composer .comment-popover-title { font-size:13px; font-weight:600; }
+.comment-popover-composer .comment-popover-actions { justify-content:flex-end; margin-top:10px; border:0; padding:0; }
+.comment-popover-composer .comment-popover-actions-end { gap:8px; flex-wrap:nowrap; }
+.comment-popover-composer .comment-popover-actions button[data-testid] { min-height:32px; padding:6px 12px; border:0; border-radius:8px; font:500 12px/1.5 Inter,sans-serif; box-shadow:none; transition:background .12s,color .12s; }
+.comment-popover-composer button[data-testid=comment-add-send] { background:#f0f0f0; color:#333; }
+.comment-popover-composer button[data-testid=comment-add-send]:hover:not(:disabled) { background:#e4e4e4; color:#222; }
+.comment-popover-composer button[data-testid=comment-popover-save] { background:#222; color:#fff; }
+.comment-popover-composer button[data-testid=comment-popover-save]:hover:not(:disabled) { background:#444; color:#fff; }
+.comment-popover-composer .comment-popover-actions button[data-testid]:active:not(:disabled) { transform:translateY(1px); }
+.comment-popover-composer .comment-popover-actions button[data-testid]:disabled { background:#f2f2f2; color:#999; opacity:1; cursor:default; }
+.comment-popover-composer .comment-popover-actions button[data-testid]:focus-visible { outline:2px solid #0099ff; outline-offset:2px; }
+.comment-popover-composer textarea { height:48px; min-height:48px; max-height:120px; resize:none; background:#f6f6f6; }
+.comment-thread-message { padding:14px 0; margin:0; border-bottom:0; }
+.comment-thread-meta { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px; }
+.comment-thread-meta strong { font-size:12px; font-weight:600; }
+.comment-thread-meta time { color:#888; font-size:11px; }
+.comment-thread-message p { margin:6px 0 0; font-size:13px; line-height:1.5; }
+.comment-popover-composer .comment-popover-section { border:0; padding:10px 0 0; margin:0; }
+.comment-saved-pin { width:32px; height:32px; border:3px solid #252525; border-radius:50% 50% 50% 0; background:#252525; box-shadow:0 3px 9px #0004; }
+.comment-pin-avatar { display:flex; align-items:center; justify-content:center; width:100%; height:100%; border-radius:50%; overflow:hidden; background:#dce9f5; color:#27445f; font:600 12px/1 Inter,sans-serif; }
+.comment-pin-avatar img,.comment-side-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.comment-active-pin { width:32px; height:32px; border:0; border-radius:50% 50% 50% 0; background:#0099ff; color:transparent; }
+.proto-workspace__comments .comment-side-header,.proto-workspace__comments .comment-side-toolbar,.proto-workspace__comments > .proto-workspace__hint,.proto-workspace__comments .comment-side-drag-handle { display:none; }
+.proto-workspace__comments .comment-side-list { padding:12px 6px; gap:4px; }
+.proto-workspace__comments .comment-side-item { padding:14px 12px; margin:0; border-radius:8px; gap:6px; }
+.proto-workspace__comments .comment-side-item-head { display:block; padding-right:0; }
+.proto-workspace__comments .comment-side-author { display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:100%; min-width:0; }
+.proto-workspace__comments .comment-side-avatar { width:28px; height:28px; overflow:hidden; }
+.proto-workspace__comments .comment-side-author-copy { width:100%; min-width:0; gap:3px; }
+.proto-workspace__comments .comment-side-author-copy strong { white-space:normal; overflow:visible; text-overflow:clip; font-size:12px; font-weight:500; line-height:1.45; color:#777; }
+.proto-workspace__comments .comment-side-author-copy small { display:flex; flex-wrap:wrap; gap:6px; max-width:none; white-space:normal; overflow:visible; font-size:12px; color:#444; }
+.proto-workspace__comments .comment-side-time { font-size:11px; color:#888; }
+.proto-workspace__comments .comment-side-body { padding:0; font-size:13px; line-height:1.5; color:#333; }
+.proto-workspace__comments .comment-side-check { position:absolute; top:17px; right:12px; opacity:0; }
+.proto-workspace__comments .comment-side-item:hover .comment-side-check,.proto-workspace__comments .comment-side-item:focus-within .comment-side-check,.proto-workspace__comments .comment-side-check.checked { opacity:1; }
+.proto-workspace__comments .comment-side-selectbar { padding:10px; gap:8px; flex-wrap:wrap; border-top:1px solid #eee; }
+.proto-workspace__comments .comment-side-selectcount { font-size:11px; white-space:nowrap; }
+.proto-workspace__comments .comment-side-selectbar { display:flex; align-items:center; }
+.proto-workspace__comments .comment-side-selectcount { flex-basis:100%; }
+.proto-workspace__comments .comment-side-selectbar button { min-height:32px; padding:6px 10px; border:0; border-radius:8px; font:500 12px/1.5 Inter,sans-serif; background:#eee; color:#333; white-space:nowrap; }
+.proto-workspace__comments .comment-side-selectbar button:hover:not(:disabled) { background:#e2e2e2; color:#222; }
+.proto-workspace__comments button[data-testid=comment-side-send-claude] { flex:1; background:#222; color:#fff; }
+.proto-workspace__comments button[data-testid=comment-side-send-claude]:hover:not(:disabled) { background:#444; color:#fff; }
+.proto-workspace__comments .comment-side-selectbar button:disabled { background:#eee; color:#999; opacity:1; }

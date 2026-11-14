@@ -4616,12 +4616,14 @@ function CommentAuthorIdentity({
   currentUser,
   displayNumber,
   initialOnly = false,
+  timestamp,
   t,
 }: {
   comment: PreviewComment;
   currentUser?: CollabCloudMemberDirectoryEntry | null;
   displayNumber: number;
   initialOnly?: boolean;
+  timestamp?: ReactNode;
   t: TranslateFn;
 }) {
   if (comment.authorKind === 'user') {
@@ -4633,6 +4635,7 @@ function CommentAuthorIdentity({
         role="sharePage"
         initialOnly={initialOnly}
         seed={comment.authorKey}
+        timestamp={timestamp}
         t={t}
       />
     );
@@ -4643,6 +4646,7 @@ function CommentAuthorIdentity({
       currentUser={currentUser}
       displayNumber={displayNumber}
       initialOnly={initialOnly}
+      timestamp={timestamp}
       t={t}
     />
   );
@@ -4653,12 +4657,14 @@ function MemberCommentAuthorIdentity({
   currentUser,
   displayNumber,
   initialOnly,
+  timestamp,
   t,
 }: {
   comment: PreviewComment;
   currentUser?: CollabCloudMemberDirectoryEntry | null;
   displayNumber: number;
   initialOnly?: boolean;
+  timestamp?: ReactNode;
   t: TranslateFn;
 }) {
   const { resolve: resolveCommentAuthor } = useTeamMembers(currentUser);
@@ -4670,7 +4676,9 @@ function MemberCommentAuthorIdentity({
       displayNumber={displayNumber}
       role={directoryAuthor?.role}
       initialOnly={initialOnly}
+      avatarUrl={directoryAuthor?.avatarUrl}
       seed={comment.authorKey}
+      timestamp={timestamp}
       t={t}
     />
   );
@@ -4683,6 +4691,8 @@ function CommentAuthorIdentityContent({
   role,
   initialOnly = false,
   seed,
+  avatarUrl,
+  timestamp,
   t,
 }: {
   comment: PreviewComment;
@@ -4691,9 +4701,12 @@ function CommentAuthorIdentityContent({
   role?: CommentAuthorRole;
   initialOnly?: boolean;
   seed?: string;
+  avatarUrl?: string | null;
+  timestamp?: ReactNode;
   t: TranslateFn;
 }) {
-  if (initialOnly) return <>{commentAuthorInitials(displayName)}</>;
+  const avatar = avatarUrl ? <img src={avatarUrl} alt="" referrerPolicy="no-referrer" /> : commentAuthorInitials(displayName);
+  if (initialOnly) return <span className="comment-pin-avatar">{avatar}</span>;
   const avatarColor = commentAuthorAvatarColor(seed ?? '');
   return (
     <span className="comment-side-author" data-author-kind={comment.authorKind ?? 'member'}>
@@ -4702,14 +4715,14 @@ function CommentAuthorIdentityContent({
         style={{ background: avatarColor.bg, color: avatarColor.fg }}
         aria-hidden="true"
       >
-        {commentAuthorInitials(displayName)}
+        {avatar}
       </span>
       <span className="comment-side-author-copy">
-        <strong>{`${displayNumber}. ${commentDisplayLabel(comment, t)}`}</strong>
+        <strong>{timestamp ? `#${displayNumber} · ${commentDisplayLabel(comment, t)}` : `${displayNumber}. ${commentDisplayLabel(comment, t)}`}</strong>
         {displayName ? (
           <small>
             {displayName}
-            {role ? <> · {commentAuthorRoleLabel(role, t)}</> : null}
+            {timestamp ?? (role ? <> · {commentAuthorRoleLabel(role, t)}</> : null)}
           </small>
         ) : null}
       </span>
@@ -4782,6 +4795,7 @@ function CommentListBody({ note, t }: { note: string; t: TranslateFn }) {
 
 export function CommentSidePanel({
   comments,
+  reviewStyle = false,
   replyCounts = {},
   loadState = 'success',
   onRetry,
@@ -4814,6 +4828,7 @@ export function CommentSidePanel({
   deckSlideCount,
 }: {
   comments: PreviewComment[];
+  reviewStyle?: boolean;
   replyCounts?: Record<string, number>;
   loadState?: 'loading' | 'error' | 'success';
   onRetry?: () => void;
@@ -5108,6 +5123,7 @@ export function CommentSidePanel({
                   comment={comment}
                   currentUser={currentUser}
                   displayNumber={displayCommentNumber(comment, index)}
+                  timestamp={reviewStyle ? <span className="comment-side-time" title={formatAbsoluteDateTime(commentCreatedAt(comment) || undefined) ?? undefined}>{formatCommentTime(commentCreatedAt(comment), commentClock, t)}</span> : undefined}
                   t={t}
                 />
                 {typeof comment.slideIndex === 'number' && deckSlideCount && deckSlideCount > 0 ? (
@@ -5115,9 +5131,8 @@ export function CommentSidePanel({
                     {t('fileViewer.speakerNotesSlide', { current: comment.slideIndex + 1, total: deckSlideCount })}
                   </span>
                 ) : null}
-                <span className="comment-side-time" title={formatAbsoluteDateTime(commentCreatedAt(comment) || undefined) ?? undefined}>
-                  {formatCommentTime(commentCreatedAt(comment), commentClock, t)}
-                </span>
+
+                {!reviewStyle && <span className="comment-side-time">{formatCommentTime(commentCreatedAt(comment), commentClock, t)}</span>}
                 {sendable ? (
                   <button
                     type="button"
@@ -5309,6 +5324,7 @@ export function computeReorderedSortKey(
 
 function CommentSideDock({
   comments,
+  reviewStyle = false,
   replyCounts,
   loadState = 'success',
   onRetry,
@@ -5341,6 +5357,7 @@ function CommentSideDock({
   deckSlideCount,
 }: {
   comments: PreviewComment[];
+  reviewStyle?: boolean;
   replyCounts?: Record<string,number>;
   loadState?: 'loading' | 'error' | 'success';
   onRetry?: () => void;
@@ -5381,6 +5398,7 @@ function CommentSideDock({
       data-testid="comment-side-dock"
     >
       <CommentSidePanel
+        reviewStyle={reviewStyle}
         replyCounts={replyCounts}
         comments={comments}
         loadState={loadState}
@@ -6135,6 +6153,7 @@ function anchorStateLabel(state: PreviewCommentAnchorState, t: TranslateFn): str
 
 function CommentPreviewOverlays({
   comments,
+  reviewStyle = false,
   currentUser,
   provisionalPinNumber,
   liveTargets,
@@ -6157,6 +6176,7 @@ function CommentPreviewOverlays({
   t,
 }: {
   comments: PreviewComment[];
+  reviewStyle?: boolean;
   currentUser?: CollabCloudMemberDirectoryEntry | null;
   /** Next pin number for a brand-new comment. Computed by the caller over the
    *  file's comments across ALL statuses (see `provisionalNextPinNumber`) —
@@ -6285,11 +6305,11 @@ function CommentPreviewOverlays({
             data-anchor-state={anchorState}
             onClick={() => onOpenCommentRef.current(comment, snapshot)}
           >
-            <div className="comment-saved-outline" /><div className="comment-pin-preview"><strong>{comment.authorDisplayName || "Comment"}</strong><p>{comment.note}</p></div>
+            <div className="comment-saved-outline" />{reviewStyle && <div className="comment-pin-preview"><strong>{comment.authorDisplayName || "Comment"}</strong><p>{comment.note}</p></div>}
             <button
               type="button"
               className="comment-saved-pin"
-              style={{ background: pinColor.bg, color: pinColor.fg }}
+              style={reviewStyle ? { background:"#252525", color:"#fff" } : {background:pinColor.bg,color:pinColor.fg}}
               onClick={(event) => {
                 event.stopPropagation();
                 onOpenCommentRef.current(comment, snapshot);
@@ -6331,7 +6351,7 @@ function CommentPreviewOverlays({
           hoveredMemberId={hoveredPodMemberId}
         />
       ) : null}
-      {showActivePin && activeTarget && !activeSavedComment ? (
+      {showActivePin && activeTarget && (!reviewStyle || !activeSavedComment) ? (
         <div
           className="comment-active-pin"
           style={{
@@ -15680,6 +15700,14 @@ function HtmlViewer({
     try {
       const existing = currentActiveComposerComment();
       let saved = existing;
+      if (!saved && !onSavePreviewComment) {
+        const checked = await currentCommentSaveTarget(activeCommentTarget);
+        if (!checked) return;
+        const attachments = buildBoardCommentAttachments({ target:withDeckSlideIndex(targetFromSnapshot(checked)), notes:[...queuedBoardNotes,commentDraft.trim()].filter(Boolean), includeImageOnly:boardImages.length > 0, imageAttachmentCount:boardImages.length });
+        const result = await onSendBoardCommentAttachments(attachments, boardImages);
+        if (commentSendSucceeded(result)) clearBoardComposer();
+        return;
+      }
       if (!saved) {
         const checked = await currentCommentSaveTarget(activeCommentTarget);
         if (!checked || !onSavePreviewComment) return;
@@ -15718,11 +15746,11 @@ function HtmlViewer({
       if (!checked) return;
       const target = withDeckSlideIndex(targetFromSnapshot(checked));
       const saved = await onSavePreviewComment(
-        activeComposerComment ? { ...target, parentCommentId: activeComposerComment.id } : target,
+        workspaceView && activeComposerComment ? { ...target, parentCommentId: activeComposerComment.id } : target,
         commentDraft.trim(),
         false,
         boardImages,
-        undefined,
+        workspaceView ? undefined : activeComposerComment?.id,
       );
       if (saved) {
         clearBoardComposer();
@@ -17001,6 +17029,7 @@ function HtmlViewer({
     <BoardComposerPopover
       target={activeCommentTarget}
       existing={activeComposerComment}
+      compactReview={Boolean(workspaceView)}
       replies={previewComments.filter(comment => comment.parentCommentId === activeComposerComment?.id && Boolean(comment.parentCommentId))}
       canEditComment={activeComposerComment ? !viewerOnly : canEditActiveComment}
       canDeleteComment={canDeleteActiveComment}
@@ -17122,6 +17151,7 @@ function HtmlViewer({
   const unavailableCommentId = boardMode ? lostSelectedCommentId : null;
   const commentSidePanel = workspaceActive && commentPanelOpen ? (
     <CommentSideDock
+      reviewStyle={Boolean(workspaceView)}
       comments={visibleSideComments}
       replyCounts={previewComments.reduce<Record<string,number>>((counts,comment) => { if (comment.parentCommentId) counts[comment.parentCommentId]=(counts[comment.parentCommentId] ?? 0)+1; return counts; }, {})}
       loadState={previewCommentsState}
@@ -17190,7 +17220,7 @@ function HtmlViewer({
           setActiveCommentTarget(needsLocation ? null : { ...snapshot, hoverPoint: comment.pinOffset ? {x:snapshot.position.x+comment.pinOffset.x*snapshot.position.width,y:snapshot.position.y+comment.pinOffset.y*snapshot.position.height} : undefined });
           setHoveredCommentTarget(needsLocation ? null : snapshot);
           setActivePreviewCommentId(comment.id);
-          setCommentDraft('');
+          setCommentDraft(workspaceView ? '' : comment.note);
           setQueuedBoardNotes([]);
           setActiveCommentExistingAttachments(comment.attachments ?? []);
           setBoardMode(true);
@@ -18395,7 +18425,8 @@ function HtmlViewer({
               </div>
               {(boardMode || workspaceView) ? (
                 <CommentPreviewOverlays
-                  comments={creationSortedSideComments}
+                  reviewStyle={Boolean(workspaceView)}
+                  comments={workspaceView || commentCreateMode ? creationSortedSideComments : []}
                   currentUser={commentAuthorSelf}
                   provisionalPinNumber={nextProvisionalPinNumber}
                   t={t}
@@ -18427,7 +18458,7 @@ function HtmlViewer({
                       setActiveCommentTarget(needsLocation ? null : { ...snapshot, hoverPoint: comment.pinOffset ? {x:snapshot.position.x+comment.pinOffset.x*snapshot.position.width,y:snapshot.position.y+comment.pinOffset.y*snapshot.position.height} : undefined });
                       setHoveredCommentTarget(needsLocation ? null : snapshot);
                       setActivePreviewCommentId(comment.id);
-                      setCommentDraft('');
+                      setCommentDraft(workspaceView ? '' : comment.note);
                       setQueuedBoardNotes([]);
                       setActiveCommentExistingAttachments(comment.attachments ?? []);
                     });

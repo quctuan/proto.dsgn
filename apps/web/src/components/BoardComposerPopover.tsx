@@ -414,6 +414,14 @@ export function AnnotationHoverPopover({
   );
 }
 
+function commentTime(time: number): string {
+  const minutes = Math.max(0, Math.floor((Date.now() - time) / 60000));
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+  return new Date(time).toLocaleDateString(undefined, { month:'short', day:'numeric' });
+}
+
 export function BoardComposerPopover({
   target,
   existing,
@@ -447,6 +455,7 @@ export function BoardComposerPopover({
   bounds,
   offset,
   docked = false,
+  compactReview = false,
   replies = [],
   commenting = true,
   discardPending = false,
@@ -454,6 +463,7 @@ export function BoardComposerPopover({
   target: PreviewCommentSnapshot;
   existing: PreviewComment | null;
   replies?: PreviewComment[];
+  compactReview?: boolean;
   draft: string;
   notes: string[];
   onDraft: (value: string) => void;
@@ -663,7 +673,10 @@ export function BoardComposerPopover({
       }}
     >
       {!docked ? (
-        <div className="comment-popover-titlebar">
+        <>{compactReview ? (        <div className="comment-popover-titlebar">
+          <span className="comment-popover-title">Comment</span>
+          <button type="button" className="comment-popover-close" aria-label="Close comment" onClick={onClose}><Icon name="close" size={16} /></button>
+        </div>) : (        <div className="comment-popover-titlebar">
           <button
             type="button"
             className="comment-popover-drag-handle"
@@ -674,7 +687,7 @@ export function BoardComposerPopover({
             <span aria-hidden />
           </button>
           <span className="comment-popover-title" title={target.label || target.elementId}>
-            {existing ? 'Comment' : 'New comment'}
+            {target.label || target.elementId}
           </span>
           {onViewAllComments ? (
             <button
@@ -688,12 +701,12 @@ export function BoardComposerPopover({
             </button>
           ) : null}
           <button type="button" className="comment-popover-close" aria-label="Close comment" onClick={onClose}><Icon name="close" size={16} /></button>
-        </div>
+        </div>)}</>
       ) : null}
       {/* Everything above the action row scrolls; the action row itself lives
           outside this box (see below) so a height-clamped card can never push
           the buttons out of view. */}
-      <div className="comment-popover-body">{existing && <div className="comment-thread-message"><strong>{existing.authorDisplayName || "Comment"}</strong><p>{existing.note}</p><time>{new Date(existing.createdAt).toLocaleString()}</time></div>}{replies.map(reply => <div key={reply.id} className="comment-thread-message"><strong>{reply.authorDisplayName || "Reply"}</strong><p>{reply.note}</p><time>{new Date(reply.createdAt).toLocaleString()}</time></div>)}
+      <div className="comment-popover-body">{compactReview && existing && <div className="comment-thread-message"><div className="comment-thread-meta"><strong>{existing.authorDisplayName || "Comment"}</strong><time title={new Date(existing.createdAt).toLocaleString()}>{commentTime(existing.createdAt)}</time></div><p>{existing.note}</p></div>}{compactReview && replies.map(reply => <div key={reply.id} className="comment-thread-message"><div className="comment-thread-meta"><strong>{reply.authorDisplayName || "Reply"}</strong><time title={new Date(reply.createdAt).toLocaleString()}>{commentTime(reply.createdAt)}</time></div><p>{reply.note}</p></div>)}
         <section hidden style={{display:"none"}} className="comment-popover-section comment-popover-section-params">
           <AnnotationStyleSummary target={target} testId="comment-popover-style-summary" />
         </section>
@@ -838,7 +851,7 @@ export function BoardComposerPopover({
       </div>
       {commenting ? (
         <div className="comment-popover-actions">
-          <div className="comment-popover-actions-start">
+          {!compactReview ? <>          <div className="comment-popover-actions-start">
             {onAttachImages && canEditComment ? (
               <>
                 <input
@@ -882,6 +895,7 @@ export function BoardComposerPopover({
               </button>
             )}
           </div>
+</> : null}
           <div className="comment-popover-actions-end">
             {isPodSelection ? (
               <>

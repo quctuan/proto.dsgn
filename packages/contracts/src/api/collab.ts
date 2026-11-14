@@ -1164,6 +1164,7 @@ export interface WorkspaceBillingCheckoutResponse {
  * the directory carries no avatar.
  */
 export interface CollabCloudMemberDirectoryEntry {
+  avatarUrl?: string | null;
   memberId: string;
   displayName: string;
   role: CollabMemberRole;
