@@ -447,11 +447,13 @@ export function BoardComposerPopover({
   bounds,
   offset,
   docked = false,
+  replies = [],
   commenting = true,
   discardPending = false,
 }: {
   target: PreviewCommentSnapshot;
   existing: PreviewComment | null;
+  replies?: PreviewComment[];
   draft: string;
   notes: string[];
   onDraft: (value: string) => void;
@@ -620,17 +622,13 @@ export function BoardComposerPopover({
   // `sendDisabled` (prop) is the external gate (e.g. the chat can't accept the
   // batch right now); combine it with the local "nothing to send" / sending
   // checks so the send-to-chat CTA reflects both.
-  const sendBlocked = (pendingCount === 0 && !hasAnyImage) || sending || sendDisabled;
+  const sendBlocked = (!existing && pendingCount === 0 && !hasAnyImage) || sending || sendDisabled;
   const isPodSelection = target.selectionKind === 'pod';
   const hasSaveContent = Boolean(trimmedDraft) || hasAnyImage;
   const existingChanged = existing ? trimmedDraft !== existingNote || hasFreshImage : true;
   const saveDisabled = !hasSaveContent || !existingChanged || sending;
   // Queue-on-send swaps the primary label to the annotation-queue wording.
-  const primaryLabel = sending
-    ? t('chat.comments.sending')
-    : queueOnSend
-      ? t('chat.annotationQueue')
-      : t('chat.comments.sendToChat');
+  const primaryLabel = sending ? 'Adding…' : 'Add to chat';
   function pickImages(list: FileList | null) {
     const imgs = Array.from(list ?? []).filter((f) => f.type.startsWith('image/'));
     if (imgs.length > 0) onAttachImages?.(imgs);
@@ -651,6 +649,7 @@ export function BoardComposerPopover({
     <div
       ref={popoverRef}
       className={`comment-popover comment-popover-composer${docked ? ' comment-popover-docked' : ''}${dragging ? ' comment-popover-dragging' : ''}`}
+      onPointerDown={event => event.stopPropagation()}
       data-testid="comment-popover"
       role="dialog"
       aria-modal="false"
@@ -675,7 +674,7 @@ export function BoardComposerPopover({
             <span aria-hidden />
           </button>
           <span className="comment-popover-title" title={target.label || target.elementId}>
-            {target.label || target.elementId}
+            {existing ? 'Comment' : 'New comment'}
           </span>
           {onViewAllComments ? (
             <button
@@ -688,13 +687,14 @@ export function BoardComposerPopover({
               <Icon name="chevron-right" size={12} />
             </button>
           ) : null}
+          <button type="button" className="comment-popover-close" aria-label="Close comment" onClick={onClose}><Icon name="close" size={16} /></button>
         </div>
       ) : null}
       {/* Everything above the action row scrolls; the action row itself lives
           outside this box (see below) so a height-clamped card can never push
           the buttons out of view. */}
-      <div className="comment-popover-body">
-        <section className="comment-popover-section comment-popover-section-params">
+      <div className="comment-popover-body">{existing && <div className="comment-thread-message"><strong>{existing.authorDisplayName || "Comment"}</strong><p>{existing.note}</p><time>{new Date(existing.createdAt).toLocaleString()}</time></div>}{replies.map(reply => <div key={reply.id} className="comment-thread-message"><strong>{reply.authorDisplayName || "Reply"}</strong><p>{reply.note}</p><time>{new Date(reply.createdAt).toLocaleString()}</time></div>)}
+        <section hidden style={{display:"none"}} className="comment-popover-section comment-popover-section-params">
           <AnnotationStyleSummary target={target} testId="comment-popover-style-summary" />
         </section>
         {podMembers.length > 0 ? (
@@ -792,7 +792,7 @@ export function BoardComposerPopover({
               autoFocus={canEditComment}
               readOnly={!canEditComment}
               aria-label={t('chat.comments.placeholder')}
-              placeholder={t('chat.comments.placeholder')}
+              placeholder={existing ? 'Reply…' : 'Add a comment…'}
               onChange={(event) => onDraft(event.target.value)}
               onPaste={onComposerPaste}
               onCompositionStart={() => {
@@ -933,7 +933,7 @@ export function BoardComposerPopover({
                     disabled={saveDisabled}
                     onClick={() => void onSaveComment()}
                   >
-                    {t('chat.comments.comment')}
+                    {existing ? 'Reply' : t('chat.comments.comment')}
                   </Button>
                 ) : null}
               </>

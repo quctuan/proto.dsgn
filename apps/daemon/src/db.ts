@@ -601,6 +601,12 @@ function migrate(db: SqliteDb): void {
     db.exec(`ALTER TABLE preview_comments ADD COLUMN sort_key REAL`);
   }
   backfillPreviewCommentPinSeqAndSortKey(db);
+  const threadCols = db.prepare('PRAGMA table_info(preview_comments)').all() as DbRow[];
+  if (!threadCols.some(column => column.name === 'pin_offset_json')) db.exec('ALTER TABLE preview_comments ADD COLUMN pin_offset_json TEXT');
+  if (!threadCols.some(column => column.name === 'parent_comment_id')) {
+    db.exec('ALTER TABLE preview_comments ADD COLUMN parent_comment_id TEXT');
+  }
+
   // Author-union columns for share-page comments (an account with no team
   // membership). They MUST be added here, after the two table-rebuild
   // migrations above — migratePreviewCommentsSlideKey and
@@ -3896,7 +3902,7 @@ export function listPreviewComments(
               text, position_json AS positionJson, html_hint AS htmlHint,
               selection_kind AS selectionKind, member_count AS memberCount,
               pod_members_json AS podMembersJson, style_json AS styleJson,
-              attachments_json AS attachmentsJson,
+              attachments_json AS attachmentsJson, parent_comment_id AS parentCommentId, pin_offset_json AS pinOffsetJson,
               slide_index AS slideIndex,
               anchor_state AS anchorState, anchored_version AS anchoredVersion,
               author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
@@ -3927,7 +3933,7 @@ export function listProjectPreviewComments(db: SqliteDb, projectId: string) {
               text, position_json AS positionJson, html_hint AS htmlHint,
               selection_kind AS selectionKind, member_count AS memberCount,
               pod_members_json AS podMembersJson, style_json AS styleJson,
-              attachments_json AS attachmentsJson,
+              attachments_json AS attachmentsJson, parent_comment_id AS parentCommentId, pin_offset_json AS pinOffsetJson,
               slide_index AS slideIndex,
               anchor_state AS anchorState, anchored_version AS anchoredVersion,
               author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
@@ -3964,6 +3970,11 @@ export function upsertPreviewComment(
   options: UpsertPreviewCommentOptions = {},
 ) {
   const target = input?.target ?? {};
+  const parentCommentId = typeof target.parentCommentId === 'string' ? target.parentCommentId.trim() : null;
+  if (parentCommentId) {
+    const parent = getProjectPreviewComment(db, projectId, parentCommentId);
+    if (!parent || parent.parentCommentId || parent.filePath !== target.filePath) throw new Error('invalid comment thread');
+  }
   const note = typeof input?.note === 'string' ? input.note.trim() : '';
   const attachmentsProvided = Object.prototype.hasOwnProperty.call(input ?? {}, 'attachments');
   const incomingAttachments = normalizePreviewCommentAttachments(input?.attachments);
@@ -4051,8 +4062,8 @@ export function upsertPreviewComment(
        (id, project_id, conversation_id, file_path, source_file_id, element_id, selector, label,
         text, position_json, html_hint, selection_kind, member_count, pod_members_json,
         style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
-        anchored_version, author_member_id, author_kind, author_display_name, pin_seq, pin_seq_confirmed, sort_key)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        anchored_version, author_member_id, author_kind, author_display_name, pin_seq, pin_seq_confirmed, sort_key, parent_comment_id, pin_offset_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        selector = excluded.selector,
        label = excluded.label,
@@ -4102,6 +4113,8 @@ export function upsertPreviewComment(
     pinSeq,
     pinSeqConfirmed,
     sortKey,
+    parentCommentId,
+    target.pinOffset && Number.isFinite(target.pinOffset.x) && Number.isFinite(target.pinOffset.y) ? JSON.stringify({x:Math.max(0,Math.min(1,target.pinOffset.x)),y:Math.max(0,Math.min(1,target.pinOffset.y))}) : null,
   );
   return getPreviewComment(db, projectId, conversationId, id);
 }
@@ -4739,7 +4752,7 @@ export function mergeSyncedPreviewComment(
     const updatedAt = incomingUpdatedAt ?? createdAt;
     const result = db.prepare(
       `UPDATE preview_comments SET
-         selector = ?, label = ?, text = ?, position_json = ?, html_hint = ?,
+         parent_comment_id = ?, pin_offset_json = ?, selector = ?, label = ?, text = ?, position_json = ?, html_hint = ?,
          selection_kind = ?, member_count = ?, pod_members_json = ?, style_json = ?,
          attachments_json = ?, slide_index = ?, slide_key = ?, note = ?, status = ?,
          anchor_state = ?, anchored_version = ?, last_good_position_json = ?,
@@ -4753,6 +4766,8 @@ export function mergeSyncedPreviewComment(
          cloud_revision_stream = CASE WHEN ? THEN ? ELSE cloud_revision_stream END
        WHERE id = ? AND project_id = ?`,
     ).run(
+      comment.parentCommentId ?? null,
+      comment.pinOffset ? JSON.stringify(comment.pinOffset) : null,
       comment.selector,
       label,
       typeof comment.text === 'string' ? comment.text : '',
@@ -4817,8 +4832,8 @@ export function mergeSyncedPreviewComment(
           style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
           anchor_state, anchored_version, author_member_id, author_kind, author_app_user_id,
           author_display_name, author_key, last_good_position_json, pin_seq, pin_seq_confirmed, sort_key,
-          cloud_revision_seq, cloud_revision_stream)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          cloud_revision_seq, cloud_revision_stream, parent_comment_id, pin_offset_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       comment.id,
@@ -4856,6 +4871,8 @@ export function mergeSyncedPreviewComment(
       createdAt,
       revisionSeq,
       revisionSeq !== null ? revisionStream : null,
+      comment.parentCommentId ?? null,
+      comment.pinOffset ? JSON.stringify(comment.pinOffset) : null,
     );
   if (result.changes !== 1) throw new Error('Synced comment insert was not persisted');
   return 'changed';
@@ -4909,7 +4926,7 @@ export function getPreviewComment(
               text, position_json AS positionJson, html_hint AS htmlHint,
               selection_kind AS selectionKind, member_count AS memberCount,
               pod_members_json AS podMembersJson, style_json AS styleJson,
-              attachments_json AS attachmentsJson,
+              attachments_json AS attachmentsJson, parent_comment_id AS parentCommentId, pin_offset_json AS pinOffsetJson,
               slide_index AS slideIndex,
               anchor_state AS anchorState, anchored_version AS anchoredVersion,
               author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
@@ -4934,7 +4951,7 @@ export function getProjectPreviewComment(db: SqliteDb, projectId: string, id: st
               text, position_json AS positionJson, html_hint AS htmlHint,
               selection_kind AS selectionKind, member_count AS memberCount,
               pod_members_json AS podMembersJson, style_json AS styleJson,
-              attachments_json AS attachmentsJson,
+              attachments_json AS attachmentsJson, parent_comment_id AS parentCommentId, pin_offset_json AS pinOffsetJson,
               slide_index AS slideIndex,
               anchor_state AS anchorState, anchored_version AS anchoredVersion,
               author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
@@ -4978,6 +4995,8 @@ function normalizePreviewComment(row: DbRow): PreviewComment {
   const normalizedPodMembers = Array.isArray(podMembers) ? podMembers : undefined;
   const normalized: NormalizedPreviewComment = {
     id: row.id,
+    parentCommentId: row.parentCommentId ?? undefined,
+    pinOffset: parseJsonOrUndef(row.pinOffsetJson),
     projectId: row.projectId,
     conversationId: row.conversationId,
     filePath: row.filePath,

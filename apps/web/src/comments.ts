@@ -65,6 +65,7 @@ export function commentTargetDisplayName(
 export function targetFromSnapshot(snapshot: PreviewCommentSnapshot): PreviewCommentTarget {
   const podMembers = normalizeMembers(snapshot.podMembers);
   return {
+    pinOffset: snapshot.hoverPoint ? { x: Math.max(0,Math.min(1,(snapshot.hoverPoint.x-snapshot.position.x)/Math.max(1,snapshot.position.width))), y: Math.max(0,Math.min(1,(snapshot.hoverPoint.y-snapshot.position.y)/Math.max(1,snapshot.position.height))) } : undefined,
     filePath: snapshot.filePath,
     elementId: snapshot.elementId,
     selector: snapshot.selector,

@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, expect, it } from 'vitest';
+import { closeDatabase, openDatabase, insertProject, insertConversation, upsertPreviewComment, listProjectPreviewComments, mergeSyncedPreviewComment } from '../src/db.js';
+let dir: string;
+afterEach(() => { closeDatabase(); if (dir) fs.rmSync(dir, {recursive:true,force:true}); });
+it('persists replies separately without replacing the root, including after reopening', () => {
+  dir=fs.mkdtempSync(path.join(os.tmpdir(),'od-thread-'));
+  let db=openDatabase(dir);
+  insertProject(db,{id:'p',name:'P',createdAt:1,updatedAt:1});
+  insertConversation(db,{id:'c',projectId:'p',title:'C',createdAt:1,updatedAt:1});
+  const target={filePath:'index.html',elementId:'a',selector:'#a',label:'A',text:'A',position:{x:10,y:20,width:30,height:40},htmlHint:'',pinOffset:{x:0.25,y:0.75}};
+  const root=upsertPreviewComment(db,'p','c',{target,note:'Make this larger'})!;
+  const reply=upsertPreviewComment(db,'p','c',{target:{...target,parentCommentId:root.id},note:'How much larger?'})!;
+  expect(reply.parentCommentId).toBe(root.id);
+  expect(root.pinOffset).toEqual({x:0.25,y:0.75});
+  expect(() => upsertPreviewComment(db,'p','c',{target:{...target,parentCommentId:reply.id},note:'nested'})).toThrow('invalid comment thread');
+  closeDatabase(); db=openDatabase(dir);
+  const comments=listProjectPreviewComments(db,'p');
+  expect(comments.find(c=>c.id===root.id)?.note).toBe('Make this larger');
+  expect(comments.find(c=>c.id===reply.id)).toMatchObject({note:'How much larger?',parentCommentId:root.id});
+  mergeSyncedPreviewComment(db,'p','c',{...reply,seq:500,memberId:'m',parentCommentId:root.id,pinOffset:{x:0.25,y:0.75},updatedAt:reply.updatedAt+1000});
+  expect(listProjectPreviewComments(db,'p').find(c=>c.id===reply.id)).toMatchObject({parentCommentId:root.id,pinOffset:{x:0.25,y:0.75}});
+});

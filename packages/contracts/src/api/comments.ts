@@ -90,6 +90,9 @@ export interface PreviewCommentMember {
 }
 
 export interface PreviewCommentTarget {
+  /** Root comment for a persisted reply; replies do not create canvas pins. */
+  parentCommentId?: string;
+  pinOffset?: { x: number; y: number };
   filePath: string;
   elementId: string;
   selector: string;
@@ -139,6 +142,8 @@ export interface CommentFileMutation {
 }
 
 export interface PreviewComment {
+  parentCommentId?: string;
+  pinOffset?: { x: number; y: number };
   /** Creator workspace_artifacts UUID, scoped to this project; never inferred for historical rows. */
   sourceFileId?: string;
   id: string;

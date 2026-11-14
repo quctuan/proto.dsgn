@@ -53,3 +53,10 @@ Validation: thirteen focused workspace/picker tests passed. Browser inspection s
 - Changed: inset light gray rows, right-aligned values, compact typography, neutral page action, collapsible property groups with keyboard focus and chevrons.
 - Preserved: real CSS values, element selection, Copy CSS and sidebar collapse.
 - Validation: web typecheck passed. No animation or fabricated merge/duplicate controls added.
+
+## Canvas comments — 2026-11-14
+- Reference: supplied Figma comment cursor, pin, hover card, thread and sidebar screenshots.
+- Pins: passive anchor observation outside Comment mode, screen-independent marker size, selected ring, hover preview, relative click offsets persisted with the anchor.
+- Threads: separate persisted reply records with root links, author/time display and reply counts; local migration preserves earlier comments. Relay DTO and merge preserve thread links and pin offsets.
+- Add to chat stages saved comment context without calling handleSend or creating a queued agent task. New drafts are saved before staging; attached images use durable uploads.
+- Checks: focused thread persistence/reopen and relay tests; comment permission/merge tests; composer action/keyboard/busy tests; passive bridge tests. Timing-sensitive restoration coverage now waits for its completion event rather than a fixed 120ms delay.

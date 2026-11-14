@@ -3203,3 +3203,28 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   background: var(--bg-panel);
   min-height: 100%;
 }
+
+/* Canvas annotations stay readable independently of the workspace camera. */
+.comment-saved-pin, .comment-active-pin { transform:translate(-50%,-50%) scale(calc(1 / var(--comment-world-zoom,1))); box-shadow:0 2px 8px #0003; border:2px solid white; }
+.comment-saved-pin:hover { transform:translate(-50%,-50%) scale(calc(1.12 / var(--comment-world-zoom,1))); outline:2px solid #0099ff; }
+.comment-pin-preview { display:none; position:absolute; left:22px; top:0; width:240px; padding:14px; border-radius:12px; background:#fff; color:#333; box-shadow:0 6px 24px #0002; transform:scale(calc(1 / var(--comment-world-zoom,1))); transform-origin:top left; font:12px/1.5 Inter,sans-serif; z-index:6; }
+.comment-pin-preview p { margin:5px 0 0; white-space:pre-wrap; }
+.comment-saved-marker:has(.comment-saved-pin:hover) .comment-pin-preview,.comment-saved-marker:focus-within .comment-pin-preview { display:block; }
+.comment-thread-message { padding:12px; margin-bottom:12px; white-space:pre-wrap; border-bottom:1px solid #eee; font-size:13px; }
+.comment-popover-composer { border-radius:16px; box-shadow:0 8px 32px #0002; padding:14px; }
+.proto-workspace .comment-overlay-layer { z-index:30; }
+.proto-workspace .tool-comment { cursor:crosshair; }
+.comment-saved-marker[data-active=true] .comment-saved-pin { outline:3px solid #0099ff; }
+.comment-saved-marker[data-active=true] .comment-pin-preview { display:none; }
+.comment-popover-composer textarea { min-height:56px; max-height:160px; resize:vertical; border:1px solid #ddd; border-radius:12px; padding:12px; font:13px/1.5 Inter,sans-serif; }
+.comment-popover-composer textarea:focus { border-color:#0099ff; outline:2px solid #0099ff33; }
+.comment-thread-message p { margin:5px 0; }
+.comment-thread-message time { font-size:10px; color:#888; }
+.proto-workspace__comments .comment-side-panel { --comment-accent:#0099ff; border:0; border-radius:0; width:100%; background:transparent; }
+.proto-workspace__comments .comment-side-item { padding:14px 12px; gap:8px; margin:3px 6px; }
+.proto-workspace__comments .comment-side-item:hover { background:#f3f3f3; }
+.proto-workspace__comments .comment-side-item.active { background:#e6f4ff; }
+.comment-popover-close { display:grid; place-items:center; flex:none; width:28px; height:28px; border:0; border-radius:6px; background:transparent; color:#777; cursor:pointer; }
+.comment-popover-close:hover { background:#eee; color:#222; }
+.comment-reply-count { color:#0099ff; font-size:12px; }
+.comment-saved-marker[data-active=true]:has(.comment-saved-pin:hover) .comment-pin-preview { display:none; }

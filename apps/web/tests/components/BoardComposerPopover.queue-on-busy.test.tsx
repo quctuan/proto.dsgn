@@ -32,8 +32,8 @@ const labels: Record<string, string> = {
   'chat.comments.comment': 'Comment',
 };
 
-describe('BoardComposerPopover queue on busy conversation', () => {
-  it('shows Queue and stays clickable while a run is in flight', () => {
+describe('BoardComposerPopover stages context on busy conversation', () => {
+  it('shows Add to chat and stays clickable while a run is in flight', () => {
     const onSendBatch = vi.fn();
     render(
       <BoardComposerPopover
@@ -56,14 +56,14 @@ describe('BoardComposerPopover queue on busy conversation', () => {
     );
 
     const send = screen.getByTestId('comment-add-send') as HTMLButtonElement;
-    expect(send.textContent).toBe('Queue');
+    expect(send.textContent).toBe('Add to chat');
     expect(send.disabled).toBe(false);
 
     fireEvent.click(send);
     expect(onSendBatch).toHaveBeenCalledTimes(1);
   });
 
-  it('shows Sending… only while the batch submit is in flight', () => {
+  it('shows Adding… only while context is being staged', () => {
     render(
       <BoardComposerPopover
         target={target}
@@ -85,7 +85,7 @@ describe('BoardComposerPopover queue on busy conversation', () => {
     );
 
     const send = screen.getByTestId('comment-add-send') as HTMLButtonElement;
-    expect(send.textContent).toBe('Sending…');
+    expect(send.textContent).toBe('Adding…');
     expect(send.disabled).toBe(true);
   });
 });

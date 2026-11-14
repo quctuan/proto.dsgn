@@ -86,6 +86,7 @@ export type SrcdocOptions = {
   hideDeckChrome?: boolean;
   deckClickNavigation?: boolean;
   commentBridge?: boolean;
+  observeComments?: boolean;
   inspectBridge?: boolean;
   selectionBridge?: boolean;
   editBridge?: boolean;
@@ -421,6 +422,7 @@ export function buildSrcdoc(
   const withSelection = options.selectionBridge || options.commentBridge || options.inspectBridge
     ? injectSelectionBridge(withDeck, {
         initialCommentMode: !!options.commentBridge,
+        observeComments: !!options.observeComments,
         initialInspectMode: !!options.inspectBridge,
         runtimeStateGeneration: options.transportActivationGeneration ?? '',
       })
@@ -1796,6 +1798,7 @@ function injectSelectionBridge(
   doc: string,
   options: {
     initialCommentMode?: boolean;
+    observeComments?: boolean;
     initialInspectMode?: boolean;
     runtimeStateGeneration?: string;
   } = {},
@@ -1805,6 +1808,7 @@ function injectSelectionBridge(
   const runtimeStateGeneration = JSON.stringify(options.runtimeStateGeneration ?? '');
   const script = `<script data-od-selection-bridge>(function(){
   var commentEnabled = ${initialComment};
+  var observeComments = ${options.observeComments ? 'true' : 'false'};
   var inspectEnabled = ${initialInspect};
   var runtimeStateGeneration = ${runtimeStateGeneration};
 ${INSPECT_SELECTION_OVERLAY_SCRIPT}
@@ -1845,7 +1849,7 @@ ${INSPECT_SELECTION_OVERLAY_SCRIPT}
   // semicolons (extra declarations), braces (close the rule), angle
   // brackets (close the <style> tag), and newlines (defense in depth).
   var UNSAFE_VALUE = /[;{}<>\\n\\r]/;
-  function active(){ return commentEnabled || inspectEnabled; }
+  function active(){ return commentEnabled || inspectEnabled || observeComments; }
   function deckSlideIndexForPayload(){
     try {
       var state = window.__odDeckSlideState && window.__odDeckSlideState();
@@ -2100,7 +2104,7 @@ function meaningfulDomFallbackTarget(el) {
       id = '';
       selector = '';
     }
-    if ((validateForSave || (commentEnabled && !inspectEnabled)) && (!clickedEl || clickedEl === el) && el && el.hasAttribute('data-od-comment-id')) {
+    if ((validateForSave || ((commentEnabled || observeComments) && !inspectEnabled)) && (!clickedEl || clickedEl === el) && el && el.hasAttribute('data-od-comment-id')) {
       var identity = ownCommentIdentity(el);
       if (!identity) return null;
       id = identity.elementId;
@@ -2284,7 +2288,7 @@ function meaningfulDomFallbackTarget(el) {
     });
   }
   function canUseDomFallback(){
-    return commentEnabled && !inspectEnabled;
+    return (commentEnabled || observeComments) && !inspectEnabled;
   }
   function eventCandidateElements(event){
     var items = [];
@@ -2669,6 +2673,11 @@ function meaningfulDomFallbackTarget(el) {
       postPreviewScroll(data.requestId);
       return;
     }
+    if (data.type === 'od:comment-observe' && ev.source === window.parent) {
+      observeComments = !!data.enabled;
+      if (active()) setTimeout(postTargets, 0);
+      return;
+    }
     if (data.type === 'od:comment-mode') {
       commentEnabled = !!data.enabled;
       mode = data.mode === 'pod' ? 'pod' : 'picker';
@@ -2956,7 +2965,7 @@ function meaningfulDomFallbackTarget(el) {
   else setTimeout(postPreviewScroll, 0);
 })();</script>`;
   const style = `<style data-od-selection-bridge-style>
-html[data-od-comment-mode] body * { cursor: crosshair !important; }
+html[data-od-comment-mode] body * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='36'%3E%3Cpath d='M3 3h20a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H9l-6 6Z' fill='%230099ff' stroke='white' stroke-width='2'/%3E%3Cpath d='M10 15h12m-6-6v12' stroke='white' stroke-width='2'/%3E%3C/svg%3E") 3 33, crosshair !important; }
 html[data-od-inspect-mode] body * { cursor: crosshair !important; }
 html[data-od-comment-mode][data-od-comment-mode-kind="pod"] body * { cursor: cell !important; }
 /* Nested iframes (e.g. shared device frames) consume clicks in their own browsing context.

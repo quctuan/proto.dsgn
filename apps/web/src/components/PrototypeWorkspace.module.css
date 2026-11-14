@@ -84,3 +84,5 @@
 /* Dev mode replaces Agent, including its body-level composer portal. */
 :global(.split):has(> .workspace[data-dev-mode=true]) > :global(.split-chat-slot) { display:none; }
 :global(body):has(.workspace[data-dev-mode=true]) :global(.chat-composer-fixed-layer) { display:none; pointer-events:none; }
+/* Workspace owns the tools; artifact-level chrome must not duplicate them. */
+.workspace :global(.proto-workspace__render .viewer-toolbar) { display:none; }

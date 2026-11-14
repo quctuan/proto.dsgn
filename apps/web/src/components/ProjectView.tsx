@@ -12193,52 +12193,26 @@ export function ProjectView({
       }
       setWorkspaceFocused(false);
       setCommentInspectorActive(false);
-      // Upload any attached images once, then queue. Each comment becomes its
-      // own task (so multiple notes => multiple queued tasks); the images ride
-      // along the first task rather than being duplicated across every note.
-      let uploaded: ChatAttachment[] = [];
+      // Add context to the composer only. The user's Send action starts a run.
+      let uploadedImages: PreviewCommentAttachment[] = [];
       if (images.length > 0) {
-        const result = await uploadProjectFiles(
-          project.id,
-          images,
-          undefined,
-          projectRunWorkspaceContext,
-        );
-        if (result.uploaded.length !== images.length) {
-          return finish({ status: 'rejected', commentIds: [] });
+        const uploaded = await uploadProjectFiles(project.id, images, undefined, projectRunWorkspaceContext);
+        if (uploaded.uploaded.length !== images.length) return finish({ status:'rejected', commentIds:[] });
+        uploadedImages = uploaded.uploaded.map(file => ({path:file.path,name:file.name}));
+      }
+      setAttachedComments(current => {
+        let next = current;
+        for (const item of commentAttachments) {
+          const saved = previewComments.find(comment => comment.id === item.id) ?? {
+            id:item.id, projectId:project.id, conversationId:activeConversationId ?? "", filePath:item.filePath, elementId:item.elementId, selector:item.selector, label:item.label, text:item.currentText, position:item.pagePosition, htmlHint:item.htmlHint, style:item.style, note:item.comment, status:"open" as const, createdAt:Date.now(), updatedAt:Date.now(), attachments:item.imageAttachments,
+          };
+          if (saved) next = mergeAttachedComments(next, { ...saved, attachments: mergePreviewCommentAttachments(saved.attachments, uploadedImages) });
         }
-        uploaded = result.uploaded;
-      }
-      if (commentAttachments.length === 0) {
-        const queued = uploaded.length > 0
-          ? await handleSend('', uploaded, [], { queueOnly: true, entryFrom: 'comment' })
-          : false;
-        return finish({
-          status: queued ? 'queued' : 'rejected',
-          commentIds: [],
-        });
-      }
-      const queuedCommentIds: string[] = [];
-      for (let i = 0; i < commentAttachments.length; i++) {
-        const commentAttachment = commentAttachments[i]!;
-        const savedImages = chatAttachmentsFromPreviewCommentImages(commentAttachment.imageAttachments);
-        const prompt = commentTaskQuery(commentAttachment);
-        // Comment/board pin → run: tag entry_from='comment' so the dashboard
-        // separates annotation-driven runs from plain composer sends.
-        const queued = await handleSend(
-          prompt,
-          mergeChatAttachments(i === 0 ? uploaded : [], savedImages),
-          [commentTaskContextAttachment(commentAttachment)],
-          { queueOnly: true, entryFrom: 'comment' },
-        );
-        if (!queued) {
-          return finish({ status: 'rejected', commentIds: queuedCommentIds });
-        }
-        queuedCommentIds.push(commentAttachment.id);
-      }
-      return finish({ status: 'queued', commentIds: queuedCommentIds });
+        return next;
+      });
+      return finish({ status: 'accepted', commentIds: commentAttachments.map(item => item.id) });
     },
-    [handleSend, project.id, project.metadata, analytics.track, currentConversationQueueDisabled, projectRunWorkspaceContext],
+    [previewComments, activeConversationId, project.id, project.metadata, analytics.track, currentConversationQueueDisabled, projectRunWorkspaceContext],
   );
   const commentQueueOnSend = currentConversationBusy && !currentConversationQueueDisabled;
 

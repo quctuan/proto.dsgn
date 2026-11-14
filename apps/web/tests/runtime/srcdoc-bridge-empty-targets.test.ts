@@ -87,7 +87,7 @@ async function waitForPostedMessages(
   type: string,
   expectedCount = 1,
 ): Promise<PostedMessage[]> {
-  const deadline = Date.now() + 500;
+  const deadline = Date.now() + 2000;
   let messages = postedMessages(parentPostMessage, type);
   while (messages.length < expectedCount && Date.now() < deadline) {
     await new Promise<void>((resolve) => win.setTimeout(resolve, 10));
@@ -142,6 +142,23 @@ function setupBridgeDom(
 }
 
 describe('selection bridge — empty annotation surface (#890)', () => {
+  it('keeps reporting pin anchors in passive observation without intercepting page clicks', async () => {
+    const {dom,win,parentPostMessage}=setupBridgeDom('<button data-od-id="a" data-od-comment-id="11111111-1111-4111-8111-111111111111">Action</button>','inspect',['button']);
+    win.dispatchEvent(new win.MessageEvent('message',{data:{type:'od:inspect-mode',enabled:false},source:win.parent}));
+    parentPostMessage.mockClear();
+    win.dispatchEvent(new win.MessageEvent('message',{data:{type:'od:comment-observe',enabled:true},source:win.parent}));
+    await new Promise(resolve=>win.setTimeout(resolve,40));
+    const reports=postedMessages(parentPostMessage,'od:comment-targets');
+    expect(reports.length).toBeGreaterThan(0);
+    expect(reports.some(report => (report.targets as {elementId:string}[]).some(target => target.elementId === 'cmt:11111111-1111-4111-8111-111111111111'))).toBe(true);
+    parentPostMessage.mockClear();
+    const click=new win.MouseEvent('click',{bubbles:true,cancelable:true});
+    win.document.querySelector('button')!.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(false);
+    expect(postedMessages(parentPostMessage,'od:comment-target')).toEqual([]);
+    dom.window.close();
+  });
+
   it('posts od:comment-targets with an empty list when the artifact has no annotated elements', async () => {
     const { win, parentPostMessage } = setupBridgeDom(
       // PRD-style mockup: real DOM, zero `data-od-id` / `data-screen-label`.
@@ -520,7 +537,7 @@ describe('selection bridge — empty annotation surface (#890)', () => {
     home.dispatchEvent(new win.Event('input', { bubbles: true }));
     home.dispatchEvent(new win.Event('change', { bubbles: true }));
 
-    await new Promise<void>((resolve) => win.setTimeout(resolve, 120));
+    await waitForPostedMessages(win as unknown as Pick<Window, 'setTimeout'>, parentPostMessage, 'od:preview-runtime-state-restored');
     expect(home.hasAttribute('hidden')).toBe(true);
     expect(home.getAttribute('data-edit-revision')).toBeNull();
     expect(profile.hasAttribute('hidden')).toBe(false);

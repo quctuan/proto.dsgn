@@ -1200,6 +1200,8 @@ export interface CollabCloudMembersResponse {
  * last-writer-wins check for a revision the receiver has not seen yet.
  */
 export interface CollabCloudComment {
+  parentCommentId?: string;
+  pinOffset?: { x: number; y: number };
   /** Server-admitted immutable creator file lifetime, not a permission. */
   sourceFileId?: string;
   sourceFilePath?: string;

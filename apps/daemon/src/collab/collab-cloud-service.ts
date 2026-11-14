@@ -287,6 +287,8 @@ export function previewCommentToCloud(
 			comment.authorKind === "user" ? "" : (comment.authorMemberId ?? ""),
 		seq: 0,
 		note: comment.note,
+    ...(comment.parentCommentId ? {parentCommentId:comment.parentCommentId} : {}),
+    ...(comment.pinOffset ? {pinOffset:comment.pinOffset} : {}),
 		filePath: comment.filePath,
 		elementId: comment.elementId,
 		selector: comment.selector,
