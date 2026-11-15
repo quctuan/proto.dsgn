@@ -1,3 +1,4 @@
+import { ReviewThread } from './ReviewThread';
 import type { ChangeEvent, ClipboardEvent, CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { Button, Textarea } from '@open-design/components';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -455,6 +456,8 @@ export function BoardComposerPopover({
   bounds,
   offset,
   docked = false,
+  onEditComment,
+  onResolveComment,
   compactReview = false,
   replies = [],
   commenting = true,
@@ -463,6 +466,8 @@ export function BoardComposerPopover({
   target: PreviewCommentSnapshot;
   existing: PreviewComment | null;
   replies?: PreviewComment[];
+  onEditComment?: (comment: PreviewComment, note: string) => Promise<unknown>;
+  onResolveComment?: () => void | Promise<unknown>;
   compactReview?: boolean;
   draft: string;
   notes: string[];
@@ -523,6 +528,7 @@ export function BoardComposerPopover({
   const [popoverSize, setPopoverSize] = useState<PopoverSize | undefined>(undefined);
   const [manualPosition, setManualPosition] = useState<PopoverPosition | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const targetPlacementKey = [
     target.filePath,
     target.elementId,
@@ -634,8 +640,8 @@ export function BoardComposerPopover({
   // checks so the send-to-chat CTA reflects both.
   const sendBlocked = (!existing && pendingCount === 0 && !hasAnyImage) || sending || sendDisabled;
   const isPodSelection = target.selectionKind === 'pod';
-  const hasSaveContent = Boolean(trimmedDraft) || hasAnyImage;
-  const existingChanged = existing ? trimmedDraft !== existingNote || hasFreshImage : true;
+  const hasSaveContent = Boolean(trimmedDraft) || (compactReview && existing ? hasFreshImage : hasAnyImage);
+  const existingChanged = compactReview || !existing || trimmedDraft !== existingNote || hasFreshImage;
   const saveDisabled = !hasSaveContent || !existingChanged || sending;
   // Queue-on-send swaps the primary label to the annotation-queue wording.
   const primaryLabel = sending ? 'Adding…' : 'Add to chat';
@@ -658,12 +664,12 @@ export function BoardComposerPopover({
   return (
     <div
       ref={popoverRef}
-      className={`comment-popover comment-popover-composer${docked ? ' comment-popover-docked' : ''}${dragging ? ' comment-popover-dragging' : ''}`}
+      className={`comment-popover comment-popover-composer${docked ? ' comment-popover-docked' : ''}${dragging ? ' comment-popover-dragging' : ''}${compactReview ? ' review-thread' : ''}`}
       onPointerDown={event => event.stopPropagation()}
       data-testid="comment-popover"
       role="dialog"
       aria-modal="false"
-      aria-label="Annotation"
+      aria-label={compactReview ? "Comment thread" : "Annotation"}
       style={popoverStyle}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
@@ -675,6 +681,7 @@ export function BoardComposerPopover({
       {!docked ? (
         <>{compactReview ? (        <div className="comment-popover-titlebar">
           <span className="comment-popover-title">Comment</span>
+          {existing && onResolveComment && <button className="comment-popover-resolve" aria-label={existing.status === 'resolved' ? 'Reopen thread' : 'Resolve thread'} onClick={async () => { setReviewError(''); try { await onResolveComment(); } catch { setReviewError('Could not update thread. Try again.'); } }}><Icon name="check" size={18} /></button>}
           <button type="button" className="comment-popover-close" aria-label="Close comment" onClick={onClose}><Icon name="close" size={16} /></button>
         </div>) : (        <div className="comment-popover-titlebar">
           <button
@@ -706,7 +713,7 @@ export function BoardComposerPopover({
       {/* Everything above the action row scrolls; the action row itself lives
           outside this box (see below) so a height-clamped card can never push
           the buttons out of view. */}
-      <div className="comment-popover-body">{compactReview && existing && <div className="comment-thread-message"><div className="comment-thread-meta"><strong>{existing.authorDisplayName || "Comment"}</strong><time title={new Date(existing.createdAt).toLocaleString()}>{commentTime(existing.createdAt)}</time></div><p>{existing.note}</p></div>}{compactReview && replies.map(reply => <div key={reply.id} className="comment-thread-message"><div className="comment-thread-meta"><strong>{reply.authorDisplayName || "Reply"}</strong><time title={new Date(reply.createdAt).toLocaleString()}>{commentTime(reply.createdAt)}</time></div><p>{reply.note}</p></div>)}
+      <div className="comment-popover-body">{reviewError && <p role="alert">{reviewError}</p>}{compactReview && existing && <ReviewThread comments={[existing, ...replies]} canEdit={canEditComment} canDelete={canDeleteComment} onEdit={onEditComment} onDelete={onDeleteComment} />}
         <section hidden style={{display:"none"}} className="comment-popover-section comment-popover-section-params">
           <AnnotationStyleSummary target={target} testId="comment-popover-style-summary" />
         </section>
@@ -851,7 +858,7 @@ export function BoardComposerPopover({
       </div>
       {commenting ? (
         <div className="comment-popover-actions">
-          {!compactReview ? <>          <div className="comment-popover-actions-start">
+          {<>          <div className="comment-popover-actions-start">
             {onAttachImages && canEditComment ? (
               <>
                 <input
@@ -864,7 +871,7 @@ export function BoardComposerPopover({
                 />
                 <button
                   type="button"
-                  className="comment-popover-close"
+                  className="comment-popover-close comment-popover-attach"
                   onClick={() => imageInputRef.current?.click()}
                   title={t('chat.annotationAttachImage')}
                   aria-label={t('chat.annotationAttachImage')}
@@ -873,7 +880,7 @@ export function BoardComposerPopover({
                 </button>
               </>
             ) : null}
-            {existing && onDeleteComment && canDeleteComment ? (
+            {!compactReview && existing && onDeleteComment && canDeleteComment ? (
               <button
                 type="button"
                 className="comment-popover-close comment-popover-delete"
@@ -895,7 +902,7 @@ export function BoardComposerPopover({
               </button>
             )}
           </div>
-</> : null}
+</>}
           <div className="comment-popover-actions-end">
             {isPodSelection ? (
               <>
@@ -944,10 +951,11 @@ export function BoardComposerPopover({
                   <Button
                     variant="primary"
                     data-testid="comment-popover-save"
+                    aria-label={existing ? "Send reply" : "Send comment"}
                     disabled={saveDisabled}
                     onClick={() => void onSaveComment()}
                   >
-                    {existing ? 'Reply' : t('chat.comments.comment')}
+                    {compactReview ? <Icon name="arrow-up" size={18} /> : existing ? 'Reply' : t('chat.comments.comment')}
                   </Button>
                 ) : null}
               </>

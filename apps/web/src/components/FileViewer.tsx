@@ -1,3 +1,4 @@
+import { patchPreviewCommentStatus } from '../providers/registry';
 import { validateCommentSaveTarget } from '../comments/validate-save-target';
 import { previewStorageKey, readPreviewStorage, savePreviewStorageMessage } from '../runtime/preview-storage';
 import { commentSelectorsMatch, commentUsesIdentity, ownerCommentNeedsLocation, resolveOwnerCommentAnchor } from '../comments/owner-anchor';
@@ -15753,7 +15754,8 @@ function HtmlViewer({
         workspaceView ? undefined : activeComposerComment?.id,
       );
       if (saved) {
-        clearBoardComposer();
+        if (workspaceView) { setCommentDraft(''); setBoardImages([]); setQueuedBoardNotes([]); }
+        else clearBoardComposer();
         setActiveCommentExistingAttachments(saved.attachments ?? []);
         setBoardMode(true);
         setCommentCreateMode(true);
@@ -17030,6 +17032,14 @@ function HtmlViewer({
       target={activeCommentTarget}
       existing={activeComposerComment}
       compactReview={Boolean(workspaceView)}
+      onEditComment={onSavePreviewComment ? async (comment, note) => {
+        const saved = await onSavePreviewComment(comment, note, false, [], comment.id);
+        return saved;
+      } : undefined}
+      onResolveComment={activeComposerComment ? async () => {
+        await patchPreviewCommentStatus(projectId, activeComposerComment.conversationId, activeComposerComment.id, activeComposerComment.status === 'resolved' ? 'open' : 'resolved', workspaceContext);
+        onRetryPreviewComments?.(); clearBoardComposer();
+      } : undefined}
       replies={previewComments.filter(comment => comment.parentCommentId === activeComposerComment?.id && Boolean(comment.parentCommentId))}
       canEditComment={activeComposerComment ? !viewerOnly : canEditActiveComment}
       canDeleteComment={canDeleteActiveComment}

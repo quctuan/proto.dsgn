@@ -124,7 +124,7 @@ export function PrototypeWorkspace({ projectId, projectName, files, revision, bu
   useEffect(() => {
     const stage = stageRef.current; if (!stage) return;
     const wheel = (event: WheelEvent) => {
-      if ((event.target as Element).closest('[data-board-menu], .proto-workspace__dock')) return;
+      if ((event.target as Element).closest('[data-board-menu], .proto-workspace__dock, .comment-popover, .comment-side-panel')) return;
       event.preventDefault();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1;
       if (event.ctrlKey || event.metaKey) {
@@ -135,6 +135,19 @@ export function PrototypeWorkspace({ projectId, projectName, files, revision, bu
     stage.addEventListener('wheel', wheel, { passive: false });
     return () => stage.removeEventListener('wheel', wheel);
   }, [zoom, fastZoom]);
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || event.repeat || event.isComposing) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable], [role="textbox"], [role="dialog"], [role="listbox"]')) return;
+      const next = ({ v: 'select', h: 'pan', c: 'comment', e: 'edit' } as const)[event.key.toLowerCase() as 'v' | 'h' | 'c' | 'e'];
+      if (!next || (next === 'edit' && readOnly)) return;
+      event.preventDefault();
+      rootRef.current?.querySelector<HTMLButtonElement>(`.proto-workspace__dock button[aria-label="${({ select: 'Select', pan: 'Hand', comment: 'Comment', edit: 'Edit' })[next]}"]`)?.click();
+    };
+    window.addEventListener('keydown', keydown);
+    return () => window.removeEventListener('keydown', keydown);
+  }, [readOnly]);
   function commitGeometry() { screenDrag.current = null; }
   async function createPrototype() {
     if (creating || busy || readOnly || !pages.length) return;
@@ -181,7 +194,7 @@ export function PrototypeWorkspace({ projectId, projectName, files, revision, bu
           </article>)}
         </div> : <div className="proto-workspace__empty"><strong>{tab === 'canvas' ? 'Your design starts here' : busy ? 'Creating your prototype' : 'Bring your design to life'}</strong><p>{tab === 'canvas' ? 'Add a brief or reference in chat. Ask your agent to create static screens.' : busy ? 'New prototype revisions will appear here when the agent finishes.' : 'Create static screens in Canvas, then choose Create prototype.'}</p></div>}
         <div className="proto-workspace__dock" onPointerDown={event => event.stopPropagation()}>
-          {(['select', 'pan', 'comment', 'edit'] as const).map(item => <button key={item} aria-label={({ select: 'Select', pan: 'Hand', comment: 'Comment', edit: 'Edit' })[item]} title={({ select: 'Select', pan: 'Hand', comment: 'Comment', edit: 'Edit' })[item]} aria-pressed={tool === item} disabled={item === 'edit' && readOnly} onClick={event => { setTool(item); if (item === 'comment') setPanel('comments'); const root = event.currentTarget.closest('.proto-workspace'); const selector = item === 'edit' ? '[data-testid=manual-edit-mode-toggle]' : null; if (selector) (root?.querySelector(`.proto-workspace__screen.is-selected ${selector}`) as HTMLButtonElement | null)?.click(); }}>{item === 'select' || item === 'pan' ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{item === 'select' ? <path d="m4 3 16 8-7 2-3 8L4 3Z" /> : <path d="M8 12V6a1.5 1.5 0 0 1 3 0v5-7a1.5 1.5 0 0 1 3 0v7-5a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v6c0 4-2.5 6-6 6h-1c-2 0-3.5-1-5-3l-4-5a1.5 1.5 0 0 1 2-2l2 2Z" />}</svg> : <Icon name={item === 'comment' ? 'comment' : 'pencil'} size={20} />}</button>)}
+          {(['select', 'pan', 'comment', 'edit'] as const).map(item => <button key={item} aria-label={({ select: 'Select', pan: 'Hand', comment: 'Comment', edit: 'Edit' })[item]} aria-keyshortcuts={({ select: 'V', pan: 'H', comment: 'C', edit: 'E' })[item]} title={({ select: 'Select', pan: 'Hand', comment: 'Comment', edit: 'Edit' })[item]} aria-pressed={tool === item} disabled={item === 'edit' && readOnly} onClick={event => { setTool(item); if (item === 'comment') setPanel('comments'); const root = event.currentTarget.closest('.proto-workspace'); const selector = item === 'edit' ? '[data-testid=manual-edit-mode-toggle]' : null; if (selector) (root?.querySelector(`.proto-workspace__screen.is-selected ${selector}`) as HTMLButtonElement | null)?.click(); }}>{item === 'select' || item === 'pan' ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{item === 'select' ? <path d="m4 3 16 8-7 2-3 8L4 3Z" /> : <path d="M8 12V6a1.5 1.5 0 0 1 3 0v5-7a1.5 1.5 0 0 1 3 0v7-5a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v6c0 4-2.5 6-6 6h-1c-2 0-3.5-1-5-3l-4-5a1.5 1.5 0 0 1 2-2l2 2Z" />}</svg> : <Icon name={item === 'comment' ? 'comment' : 'pencil'} size={20} />}</button>)}
           <span className="proto-workspace__divider" />
           <div className={styles.modeSwitch} role="group" aria-label="Workspace mode"><button aria-label="View mode" title="View mode" aria-pressed={!dev} onClick={() => { setDev(false); setViewMode('preview'); setInspected(null); }}><Icon name="layout" size={18} /></button><button aria-label="Dev mode" title="Dev mode" aria-pressed={dev} onClick={() => { setDev(true); setViewMode('preview'); setPropertiesCollapsed(false); setInspected(null); }}><Icon name="file-code" size={18} /></button></div>
           <div className={styles.zoomControl} data-board-menu>
