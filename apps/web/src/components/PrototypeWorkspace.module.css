@@ -86,3 +86,9 @@
 :global(body):has(.workspace[data-dev-mode=true]) :global(.chat-composer-fixed-layer) { display:none; pointer-events:none; }
 /* Workspace owns the tools; artifact-level chrome must not duplicate them. */
 .workspace :global(.proto-workspace__render .viewer-toolbar) { display:none; }
+/* Equal optical insets for the mode switch and the floating tool dock. */
+.workspace :global(.proto-workspace__bar){padding:8px 12px;height:56px;box-sizing:border-box;}
+.workspace :global(.proto-workspace__tabs){padding:3px;gap:2px;border-radius:10px;align-items:center;height:38px;box-sizing:border-box;}
+.workspace :global(.proto-workspace__tabs>button){height:32px;min-height:32px;padding:0 12px;display:flex;align-items:center;gap:8px;border-radius:7px;line-height:1;}
+.workspace :global(.proto-workspace__dock){padding:6px;gap:4px;border-radius:14px;align-items:center;}
+.workspace :global(.proto-workspace__dock>button){width:34px;height:34px;min-width:34px;padding:0;}

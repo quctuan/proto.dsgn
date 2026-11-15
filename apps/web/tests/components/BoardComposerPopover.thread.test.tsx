@@ -10,7 +10,7 @@ it('shows persisted replies and stages context without invoking Reply', () => {
   render(<BoardComposerPopover compactReview target={root} existing={root} replies={[{...root,id:'reply',parentCommentId:'root',note:'Increase it by 8px',authorDisplayName:'Designer'}]} draft="" notes={[]} onDraft={()=>{}} onAddDraft={()=>{}} onRemoveQueuedNote={()=>{}} onClose={()=>{}} onSaveComment={save} onSendBatch={add} onRemoveMember={()=>{}} sending={false} t={((key:string)=>key) as never} />);
   expect(screen.getByText('Make this larger')).toBeVisible();
   expect(screen.getByText('Increase it by 8px')).toBeVisible();
-  expect(screen.getByRole('button',{name:'Reply'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Send reply'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button',{name:'Add to chat'}));
   expect(add).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
